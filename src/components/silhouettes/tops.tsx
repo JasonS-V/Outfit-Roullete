@@ -30,7 +30,7 @@ function Button({ x, y, r = 1.9, c }: { x: number; y: number; r?: number; c: ElP
 
 /** Neckline según variante ('v' para cuello en V). */
 function neck(v: string | undefined): string {
-  return v === 'v' ? 'M46 33 L60 45 L74 33' : 'M46 33 Q60 41 74 33';
+  return v === 'v' ? 'M46 33 L60 48 L74 33' : 'M46 33 Q60 41 74 33';
 }
 
 export const tee: ShapeFn = ({ c, variant }) => (

@@ -93,8 +93,13 @@ export default function WardrobeScreen() {
         </AppText>
       ) : null}
       {garment.isLaundry ? (
-        <View style={[styles.laundry, { backgroundColor: colors.ink, borderRadius: radii.sm }]}>
-          <AppText variant="micro" color={colors.bg}>
+        <View
+          style={[
+            styles.laundry,
+            { backgroundColor: colors.ink, borderRadius: radii.sm, left: 4, right: 4 },
+          ]}
+        >
+          <AppText variant="micro" color={colors.bg} style={{ fontSize: 10, textAlign: 'center' }}>
             En lavandería
           </AppText>
         </View>
@@ -289,7 +294,7 @@ const styles = StyleSheet.create({
   laundry: {
     position: 'absolute',
     bottom: 6,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingVertical: 2,
   },
   empty: {

@@ -180,6 +180,25 @@ export default function RouletteScreen() {
     if (spinning) return;
     const result = app.spinNow();
     if (!result || result.candidateCount === 0) {
+      // Mensajes honestos por caso: gym sin ropa sport, frío sin capas, o genérico.
+      const hasSport = app.garments.some((g) => !g.isArchived && g.tags.includes('sport'));
+      const hasLayer = app.garments.some((g) => !g.isArchived && g.slot === 'layer');
+      if (app.occasion === 'gym' && !hasSport) {
+        showToast({
+          text: 'Tu armario aún no tiene ropa deportiva. Suma prendas con etiqueta sport.',
+          actionLabel: 'Añadir prenda',
+          onAction: () => router.push('/garment/new'),
+        });
+        return;
+      }
+      if (mode === 'heavyCold' && !hasLayer) {
+        showToast({
+          text: 'Hace frío y tu armario aún no tiene capas: suma una casaca o chompa.',
+          actionLabel: 'Añadir capa',
+          onAction: () => router.push('/garment/new'),
+        });
+        return;
+      }
       showToast({ text: 'No hay combinaciones posibles con esos filtros. Prueba otra ocasión.' });
       return;
     }
