@@ -1,56 +1,81 @@
-# Welcome to your Expo app 👋
+# Outfit Roulette
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**"Gira. Bloquea. Vístete."** La ruleta interactiva que decide tu outfit diario en
+menos de 5 segundos usando tu propia ropa y adaptada al clima de hoy.
 
-## Get started
+## Estado actual (Sprint 1 + núcleo del Sprint 2)
 
-1. Install dependencies
+Funcionando de punta a punta:
 
-   ```bash
-   npm install
-   ```
+- **Ruleta (Hero):** 4 carretes con física de desaceleración escalonada (0.9s a 1.8s),
+  rebote de aterrizaje, ticks de sonido y vibración al cruzar cada fila.
+- **Candados 🔒** con doble canal (forma + color + vibración), arrastre manual de
+  carretes con imán y bloqueo automático al elegir a mano.
+- **"Una pieza" (§6.1):** los carretes Superior e Inferior se fusionan en tarjeta doble
+  cuando la ruleta saca un vestido/enterizo; su candado fija la pieza completa.
+- **SpinEngine (§13):** canalización determinista de 4 etapas, 71 tests unitarios
+  (color, formalidad, clima, frescura, subuso, penalizaciones, relajación, caos).
+- **Clima (Open-Meteo):** detección automática por ubicación con caché de 3h, búsqueda
+  manual de ciudad, umbrales 26/18/14 con ajuste personal (+2 friolento / -2 caluroso).
+- **Onboarding de 90 segundos** con starter pack de básicos (9 recomendadas, 6
+  premarcadas) y primer giro guiado con tip del candado.
+- **Armario:** parrilla por categorías, búsqueda, detalle con favoritas, lavandería,
+  eliminación con confirmación y exclusión de lavandería en los giros.
+- **Looks:** guardar con deshacer, "Para hoy" por temperatura, cargar en la ruleta con
+  candados, registrar uso, compartir (hoja nativa / portapapeles en web).
+- **Perfil:** sonido, vibración, modo caos, capa en templado, preferencia térmica,
+  estadísticas reales del ropero y borrado total de datos.
+- **Biblioteca de básicos:** 80 prendas del plan §10.3 representadas con 46 siluetas
+  vectoriales recolorables (3 capas) y 16 colores de teñido.
+- **Sonido:** tick/tunc/chime sintetizados localmente (WAV 44.1kHz).
 
-2. Start the app
+Pendiente (siguientes sprints, según el plan): cámara + recorte local (Sprint 3),
+persistencia SQLite (Sprint 3), video vertical 9:16 (Sprint 4), RevenueCat (Sprint 4),
+las siluetas restantes hasta las 80 del plan (pase de arte continuo).
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Cómo correr
 
 ```bash
-npm run reset-project
+pnpm install
+pnpm start          # Expo dev server
+pnpm web            # versión web
+pnpm test           # suite del motor (vitest, 71 tests)
+pnpm typecheck      # tsc estricto
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+En este sprint el armario vive en memoria: al recargar, el estado se reinicia.
+La base de datos local (SQLite) llega en el Sprint 3 sin cambiar las pantallas.
 
-### Other setup steps
+## Estructura
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```
+src/
+  app/            Rutas (Expo Router): (tabs)/ruleta|armario|looks|perfil, onboarding, garment/new
+  components/
+    roulette/     RouletteReel (física del giro), LockButton
+    silhouettes/  46 formas vectoriales recolorables + renderizador
+    ui/           AppText, Chip, PrimaryButton, Sheet, Toast
+    weather/      Chip de clima, buscador de ciudad, hoja de configuración
+  context/        AppContext: armario, looks, giros, candados, clima, ajustes
+  data/           Catálogo de 80 básicos, starter pack, paleta de 16 colores
+  engine/         SpinEngine puro (sin RN): color, formalidad, clima, selección
+  services/       Clima (Open-Meteo), hápticos, sonido
+  theme/          Tokens "Boutique Arcade" + tipografía Figtree
+  utils/          Compartir, confirmaciones destructivas
+tests/            Suite del motor (vitest, 71 tests)
+scripts/          generate_sounds.py (síntesis de los WAV)
+assets/sounds/    tick.wav, tunc.wav, chime.wav
+```
 
-## Learn more
+## Calidad
 
-To learn more about developing your project with Expo, look at the following resources:
+- Filtro anti-slop aplicado durante el desarrollo (sin controles muertos, contraste
+  AA, estados vacío/carga/error, microcopy específico, sin em dash).
+- `DESIGN.md` documenta dirección, diales y una razón por decisión.
+- TypeScript estricto; el motor es puro y 100% testeable con `rng` inyectado.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Créditos de arte
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Los íconos de pestañas, la ruleta y las siluetas de prendas son dibujos propios en SVG,
+inspirados en cultura pop de los 90 y el armario computarizado de Clueless, sin usar
+marcas, tipografías ni materiales protegidos (plan §1.4).
