@@ -1,6 +1,6 @@
 /**
  * LockButton · candado del carrete (§7).
- * Estados con doble canal (forma + color): contorno suave vs relleno amarillo.
+ * Estados con doble canal (forma + color): contorno suave vs relleno lavanda.
  * Área táctil de 48dp y pop de escala de 120 ms con vibración rígida.
  */
 
@@ -24,7 +24,9 @@ export function LockButton({ locked, onToggle, disabled }: LockButtonProps) {
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
-  const iconColor = locked ? colors.onCandado : colors.inkSoft;
+  const iconColor = locked ? colors.onCandado : colors.ink;
+  const surface = locked ? colors.candado : colors.surfaceRaised;
+  const edge = locked ? colors.candado : colors.line;
 
   return (
     <AnimatedPressable
@@ -45,8 +47,8 @@ export function LockButton({ locked, onToggle, disabled }: LockButtonProps) {
         styles.button,
         animatedStyle,
         {
-          backgroundColor: locked ? colors.candado : 'rgba(255,255,255,0.55)',
-          borderColor: locked ? colors.onCandado : colors.line,
+          backgroundColor: surface,
+          borderColor: edge,
           opacity: disabled ? 0.5 : 1,
         },
       ]}

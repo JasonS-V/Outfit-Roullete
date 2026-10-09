@@ -5,10 +5,13 @@
  * rebote corto al aterrizar (withSpring). Tics de sonido/vibración al
  * cruzar cada fila. Arrastre manual con imán (snap) que el padre convierte
  * en selección + candado automático (§7.2).
+ *
+ * El carrete conserva la interacción original sobre una tarjeta editorial.
  */
 
+import { LinearGradient } from 'expo-linear-gradient';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -25,10 +28,13 @@ import { AppText } from '@/components/ui/AppText';
 import type { Garment, ReelSlot } from '@/engine';
 import { hapticTick } from '@/services/haptics';
 import { playTick } from '@/services/sound';
-import { useTheme } from '@/theme';
+import { useTheme, type ReelKey } from '@/theme';
 import { LockButton } from './LockButton';
 
 export const REEL_HEIGHT = 116;
+
+/** Ventana interior: inset y radio siguen a la tarjeta (20 pt menos el inset). */
+const WINDOW_INSET = 4;
 
 const PICK = (pool: Garment[], count: number): Garment[] => {
   const out: Garment[] = [];
@@ -49,26 +55,31 @@ function recenter(winner: Garment, pool: Garment[]): { items: Garment[]; index: 
 interface ReelRowProps {
   garment: Garment;
   height: number;
+  slotLabel: string;
+  compact: boolean;
 }
 
-const ReelRow = memo(function ReelRow({ garment, height }: ReelRowProps) {
-  const { colors } = useTheme();
+const ReelRow = memo(function ReelRow({ garment, height, slotLabel, compact }: ReelRowProps) {
+  const { colors, mode } = useTheme();
   return (
-    <View style={[styles.row, { height }]}>
-      <View style={[styles.rowArt, { width: Math.min(112, height - 4) }]}>
+    <View style={[styles.row, { height, paddingRight: compact ? 56 : 64 }]}>
+      <View style={[styles.rowArt, { width: compact ? 68 : Math.min(96, height - 6), backgroundColor: colors.surfaceRaised }]}>
         <GarmentSilhouette
           silhouette={garment.silhouette}
           colorHex={garment.colorHex}
           hasPattern={garment.hasPattern}
           pattern={patternFor(garment.basicKey)}
-          size={Math.min(104, height - 12)}
+          size={compact ? 68 : Math.min(92, height - 14)}
         />
       </View>
       <View style={styles.rowText}>
-        <AppText variant="subtitle" numberOfLines={1}>
+        <AppText variant="micro" color={mode === 'dark' ? colors.ink : colors.inkSoft} style={styles.category}>
+          {slotLabel.toUpperCase()}
+        </AppText>
+        <AppText variant="subtitle" numberOfLines={2}>
           {garment.name}
         </AppText>
-        <AppText variant="micro" color={colors.inkSoft} numberOfLines={1}>
+        <AppText variant="micro" color={mode === 'dark' ? colors.ink : colors.inkSoft} numberOfLines={1}>
           {garment.colorName}
         </AppText>
       </View>
@@ -79,7 +90,8 @@ const ReelRow = memo(function ReelRow({ garment, height }: ReelRowProps) {
 interface ReelProps {
   slot: ReelSlot;
   slotLabel: string;
-  tint: string;
+  /** Clave del pastel de la categoría (degradado + tinte vienen del tema). */
+  tintKey: ReelKey;
   pool: Garment[];
   winner: Garment | null;
   spinId: number;
@@ -89,7 +101,6 @@ interface ReelProps {
   onSettled: (slot: ReelSlot) => void;
   onToggleLock: () => void;
   onManualPick: (slot: ReelSlot, garment: Garment) => void;
-  showLockTip?: boolean;
   /** Altura de la tarjeta; las piezas únicas usan doble altura (§6.1). */
   height?: number;
 }
@@ -97,7 +108,7 @@ interface ReelProps {
 export function RouletteReel({
   slot,
   slotLabel,
-  tint,
+  tintKey,
   pool,
   winner,
   spinId,
@@ -107,11 +118,14 @@ export function RouletteReel({
   onSettled,
   onToggleLock,
   onManualPick,
-  showLockTip,
   height = REEL_HEIGHT,
 }: ReelProps) {
   const H = height;
-  const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  const compact = width < 360;
+  /** Paso real de fila dentro de la ventana interior. */
+  const ROW = H - WINDOW_INSET * 2;
+  const { colors, reelGradient, reelTint, radii } = useTheme();
   const [strip, setStrip] = useState<Garment[]>(() => (winner ? [winner] : []));
   const translateY = useSharedValue(0);
   const startY = useSharedValue(0);
@@ -135,10 +149,10 @@ export function RouletteReel({
       const next = recenter(w, stripPoolRef.current);
       centerIndex.current = next.index;
       setStrip(next.items);
-      translateY.value = -next.index * H;
+      translateY.value = -next.index * ROW;
       onSettled(slot);
     },
-    [onSettled, slot, translateY, H],
+    [onSettled, slot, translateY, ROW],
   );
 
   // ── Giro ─────────────────────────────────────────────────────────────────
@@ -157,7 +171,7 @@ export function RouletteReel({
     rows.push(winner);
     setStrip(rows);
     translateY.value = 0;
-    const target = -(rows.length - 1) * H;
+    const target = -(rows.length - 1) * ROW;
     translateY.value = withTiming(
       target + 12,
       {
@@ -190,13 +204,13 @@ export function RouletteReel({
     const next = recenter(winner, stripPoolRef.current);
     centerIndex.current = next.index;
     setStrip(next.items);
-    translateY.value = -next.index * H;
+    translateY.value = -next.index * ROW;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [winner, spinning]);
 
   // ── Tics al cruzar filas ─────────────────────────────────────────────────
   useAnimatedReaction(
-    () => Math.floor(-translateY.value / H + 0.5),
+    () => Math.floor(-translateY.value / ROW + 0.5),
     (curr, prev) => {
       if (prev !== null && curr !== prev) {
         runOnJS(triggerTick)();
@@ -222,7 +236,7 @@ export function RouletteReel({
       startY.value = translateY.value;
     })
     .onUpdate((event) => {
-      const min = -(strip.length - 1) * H;
+      const min = -(strip.length - 1) * ROW;
       let next = startY.value + event.translationY;
       if (next > 20) next = 20;
       if (next < min - 20) next = min - 20;
@@ -231,9 +245,9 @@ export function RouletteReel({
     .onEnd(() => {
       const minIdx = 0;
       const maxIdx = strip.length - 1;
-      let idx = Math.round(-translateY.value / H);
+      let idx = Math.round(-translateY.value / ROW);
       idx = Math.max(minIdx, Math.min(maxIdx, idx));
-      translateY.value = withSpring(-idx * H, { damping: 20, stiffness: 220 });
+      translateY.value = withSpring(-idx * ROW, { damping: 20, stiffness: 220 });
       if (idx !== centerIndex.current) {
         centerIndex.current = idx;
         runOnJS(handleManual)(idx);
@@ -252,39 +266,50 @@ export function RouletteReel({
           styles.card,
           {
             height: H,
-            backgroundColor: tint,
-            borderColor: locked ? colors.inkSoft : 'transparent',
-            borderWidth: locked ? 1.5 : 0,
-            borderStyle: locked ? 'dashed' : 'solid',
-            opacity: locked ? 0.94 : 1,
+            backgroundColor: reelTint[tintKey],
+            borderColor: locked ? colors.ink : colors.cardEdge,
+            borderWidth: locked ? 1.5 : 1,
           },
         ]}
       >
-        <View style={styles.clip}>
-          {strip.length === 0 ? (
-            <View style={[styles.row, { height: H }]}>
-              <AppText variant="label" color={colors.inkSoft} style={{ marginLeft: 16 }}>
-                Sin prendas todavía
-              </AppText>
-            </View>
-          ) : (
-            <Animated.View style={[styles.strip, stripStyle]}>
-              {strip.map((g, i) => (
-                <ReelRow key={`${g.id}-${i}`} garment={g} height={H} />
-              ))}
-            </Animated.View>
-          )}
+        <LinearGradient
+          colors={reelGradient[tintKey]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        {/* Filo superior: una línea de luz que asienta la tarjeta sobre el fondo. */}
+        <View pointerEvents="none" style={[styles.sheen, { backgroundColor: colors.sheen }]} />
+
+        <View
+          style={[
+            styles.window,
+            {
+              borderRadius: radii.card - WINDOW_INSET,
+              backgroundColor: locked ? colors.sheen : 'transparent',
+            },
+          ]}
+        >
+          <View style={styles.clip}>
+            {strip.length === 0 ? (
+              <View style={[styles.row, { height: ROW }]}>
+                <AppText variant="label" color={colors.inkSoft} style={{ marginLeft: 16 }}>
+                  Sin prendas todavía
+                </AppText>
+              </View>
+            ) : (
+              <Animated.View style={[styles.strip, stripStyle]}>
+                {strip.map((g, i) => (
+                  <ReelRow key={`${g.id}-${i}`} garment={g} height={ROW} slotLabel={slotLabel} compact={compact} />
+                ))}
+              </Animated.View>
+            )}
+          </View>
         </View>
+
         <View style={[styles.lockWrap, { top: (H - 48) / 2 }]}>
           <LockButton locked={locked} onToggle={onToggleLock} disabled={spinning} />
         </View>
-        {showLockTip ? (
-          <View style={[styles.tip, { backgroundColor: colors.ink }]}>
-            <AppText variant="micro" color={colors.bg}>
-              Toca aquí si quieres fijar una prenda específica
-            </AppText>
-          </View>
-        ) : null}
       </View>
     </GestureDetector>
   );
@@ -293,9 +318,24 @@ export function RouletteReel({
 const styles = StyleSheet.create({
   card: {
     height: REEL_HEIGHT,
-    borderRadius: 20,
+    borderRadius: 16,
     overflow: 'hidden',
     justifyContent: 'center',
+  },
+  sheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+  },
+  window: {
+    position: 'absolute',
+    top: WINDOW_INSET,
+    left: WINDOW_INSET,
+    right: WINDOW_INSET,
+    bottom: WINDOW_INSET,
+    overflow: 'hidden',
   },
   clip: {
     position: 'absolute',
@@ -303,7 +343,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: 20,
     overflow: 'hidden',
   },
   strip: {
@@ -315,28 +354,27 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 10,
+    paddingLeft: 8,
     paddingRight: 64,
     gap: 8,
   },
   rowArt: {
     alignItems: 'center',
     justifyContent: 'center',
+    height: 92,
+    borderRadius: 12,
   },
   rowText: {
     flex: 1,
   },
+  category: {
+    fontSize: 10,
+    lineHeight: 14,
+    letterSpacing: 1.4,
+    marginBottom: 2,
+  },
   lockWrap: {
     position: 'absolute',
-    right: 12,
-  },
-  tip: {
-    position: 'absolute',
-    right: 66,
-    top: 10,
-    maxWidth: 190,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    right: 10,
   },
 });

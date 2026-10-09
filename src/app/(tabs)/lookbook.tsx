@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GarmentSilhouette, patternFor } from '@/components/silhouettes';
 import { AppText } from '@/components/ui/AppText';
+import { CheckIcon, ShareIcon, SlotMachineIcon, StarIcon } from '@/components/ui/icons';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Sheet } from '@/components/ui/Sheet';
 import { useToast } from '@/components/ui/Toast';
@@ -80,42 +81,52 @@ export default function LookbookScreen() {
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.bg,
           borderRadius: radii.card,
           opacity: pressed ? 0.85 : 1,
-          width: compactCard ? 168 : undefined,
-          flex: compactCard ? undefined : 1,
+          width: compactCard ? 168 : '48%',
         },
       ]}
     >
-      {renderCollage(look, compactCard ? 44 : 52)}
-      <AppText variant="micro" color={colors.inkSoft}>
-        {OCCASION_LABELS[look.occasion]} · {formatDate(look.createdAt)}
-      </AppText>
+      <View style={[styles.collageWrap, { backgroundColor: colors.reelTop, borderRadius: radii.md }]}>
+        {renderCollage(look, compactCard ? 42 : 48)}
+      </View>
+      <View style={styles.cardFooter}>
+        <AppText variant="label" numberOfLines={1}>Look guardado</AppText>
+        <AppText variant="micro" color={colors.inkSoft} numberOfLines={1}>
+          {OCCASION_LABELS[look.occasion]} · {formatDate(look.createdAt)}
+        </AppText>
+      </View>
     </Pressable>
   );
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top']}>
-      <AppText variant="title" style={styles.title}>
-        Mis looks ({looks.length})
-      </AppText>
+      <AppText variant="micro" color={colors.inkSoft} style={styles.eyebrow}>TUS FAVORITOS  /  03</AppText>
+      <View style={styles.titleRow}>
+        <AppText variant="title" style={styles.title}>Mis looks.</AppText>
+        <AppText variant="micro" color={colors.inkSoft}>{looks.length} guardados</AppText>
+      </View>
 
       {looks.length === 0 ? (
         <View style={styles.empty}>
+          <View style={[styles.emptyArt, { borderColor: colors.line, backgroundColor: colors.surface }]}>
+            <StarIcon color={colors.inkSoft} size={42} strokeWidth={1.6} />
+          </View>
           <AppText variant="subtitle" style={{ textAlign: 'center' }}>
             Aún no guardas looks
           </AppText>
           <AppText variant="body" color={colors.inkSoft} style={{ textAlign: 'center' }}>
-            Cuando la ruleta te dé un outfit que te encante, toca ⭐ Guardar y aparecerá aquí.
+            Cuando la ruleta te dé un outfit que te encante, toca Guardar y aparecerá aquí.
           </AppText>
-          <PrimaryButton label="🎰 Girar ahora" onPress={() => router.push('/')} />
+          <PrimaryButton label="Girar ahora" onPress={() => router.push('/')} leading={<SlotMachineIcon color={colors.onChicle} size={22} />} />
         </View>
       ) : (
         <FlatList
           data={looks}
           keyExtractor={(l) => l.id}
           numColumns={2}
+          showsVerticalScrollIndicator={false}
           columnWrapperStyle={styles.rowGap}
           contentContainerStyle={styles.grid}
           ListHeaderComponent={
@@ -179,16 +190,18 @@ export default function LookbookScreen() {
               }}
             />
             <PrimaryButton
-              label="✅ Me lo pongo hoy"
+              label="Me lo pongo hoy"
               variant="ghost"
+              leading={<CheckIcon size={18} color={colors.ink} />}
               onPress={() => {
                 app.registerWear(openLook.garmentIds);
-                showToast({ text: '¡Registrado! No te sugeriremos este look los próximos días' });
+                showToast({ text: 'Registrado. No te sugeriremos este look los próximos días' });
               }}
             />
             <PrimaryButton
-              label="↗ Compartir"
+              label="Compartir"
               variant="ghost"
+              leading={<ShareIcon size={18} color={colors.ink} />}
               onPress={async () => {
                 const outcome = await shareOutfit(itemsOf(openLook));
                 if (outcome === 'copied') showToast({ text: 'Look copiado, pégalo donde quieras' });
@@ -217,24 +230,39 @@ export default function LookbookScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
+  },
+  eyebrow: {
+    paddingTop: 12,
+    letterSpacing: 1.3,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
   },
   title: {
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingTop: 10,
+    paddingBottom: 18,
   },
   grid: {
-    gap: 10,
+    gap: 20,
     paddingBottom: 24,
   },
   rowGap: {
-    gap: 10,
+    justifyContent: 'space-between',
   },
   card: {
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    alignItems: 'stretch',
     gap: 8,
+  },
+  collageWrap: {
+    height: 144,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardFooter: {
+    gap: 2,
   },
   collage: {
     flexDirection: 'row',
@@ -253,5 +281,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     paddingHorizontal: 24,
+  },
+  emptyArt: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
 });

@@ -10,6 +10,7 @@ import { useApp } from '@/context/AppContext';
 import { searchCity, WeatherError, type CityResult } from '@/services/weather';
 import { useTheme } from '@/theme';
 import { AppText } from '@/components/ui/AppText';
+import { CloudSunIcon, SnowIcon, SunIcon } from '@/components/ui/icons';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Sheet } from '@/components/ui/Sheet';
 
@@ -17,15 +18,25 @@ export function WeatherChip({ onPress }: { onPress: () => void }) {
   const { weather } = useApp();
   const { colors, radii, spacing } = useTheme();
 
-  let label = 'Agregar clima';
+  let label = 'Clima';
   if (weather.status === 'ready' && weather.data) {
     const degrees = Math.round(weather.data.apparentC);
     label = `${weather.data.city} · ${degrees}°`;
   } else if (weather.status === 'loading') {
-    label = 'Leyendo clima…';
+    label = 'Cargando…';
   } else if (weather.status === 'error') {
-    label = 'Clima sin configurar';
+    label = 'Clima';
   }
+
+  const temp = weather.data?.apparentC ?? null;
+  const Glyph =
+    temp === null
+      ? CloudSunIcon
+      : temp >= 24
+        ? SunIcon
+        : temp >= 14
+          ? CloudSunIcon
+          : SnowIcon;
 
   return (
     <Pressable
@@ -35,10 +46,10 @@ export function WeatherChip({ onPress }: { onPress: () => void }) {
       style={({ pressed }) => [
         styles.chip,
         {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.bg,
           borderColor: colors.line,
-          borderRadius: radii.pill,
-          paddingHorizontal: spacing.four,
+          borderRadius: radii.md,
+          paddingHorizontal: spacing.three,
           opacity: pressed ? 0.8 : 1,
         },
       ]}
@@ -46,9 +57,12 @@ export function WeatherChip({ onPress }: { onPress: () => void }) {
       {weather.status === 'loading' ? (
         <ActivityIndicator size="small" color={colors.inkSoft} />
       ) : (
-        <AppText variant="label" numberOfLines={1}>
-          {label}
-        </AppText>
+        <>
+          <Glyph color={colors.inkSoft} size={18} />
+          <AppText variant="label" numberOfLines={1} style={{ flexShrink: 1 }}>
+            {label}
+          </AppText>
+        </>
       )}
     </Pressable>
   );
@@ -200,11 +214,13 @@ export function WeatherSheet({
 
 const styles = StyleSheet.create({
   chip: {
-    minHeight: 40,
+    minHeight: 48,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
     borderWidth: 1,
-    maxWidth: 220,
+    maxWidth: 160,
   },
   input: {
     flex: 1,

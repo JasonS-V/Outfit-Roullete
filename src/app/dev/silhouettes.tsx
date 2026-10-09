@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GarmentSilhouette, patternFor } from '@/components/silhouettes';

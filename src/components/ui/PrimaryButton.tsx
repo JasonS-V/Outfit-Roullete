@@ -1,8 +1,6 @@
-/**
- * PrimaryButton · CTA principal (botón chicle) y variantes.
- * Elevación reservada para el CTA: lo hace el punto focal de la pantalla.
- */
+/** CTA compartido: tinta ciruela, contorno suave y tipografía discreta. */
 
+import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
@@ -32,17 +30,15 @@ export function PrimaryButton({
   compact,
   accessibilityHint,
 }: PrimaryButtonProps) {
-  const { colors, radii, shadows, spacing } = useTheme();
+  const { colors, actionGradient, radii, spacing } = useTheme();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
-  const background =
-    variant === 'primary' ? colors.chicle : variant === 'danger' ? 'transparent' : colors.surface;
   const textColor =
     variant === 'primary' ? colors.onChicle : variant === 'danger' ? colors.danger : colors.ink;
 
   return (
-    <Animated.View style={[animatedStyle, !disabled && variant === 'primary' ? shadows.floating : null]}>
+    <Animated.View style={animatedStyle}>
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ disabled: Boolean(disabled) }}
@@ -61,19 +57,34 @@ export function PrimaryButton({
         style={[
           styles.button,
           {
-            backgroundColor: disabled ? colors.surface : background,
-            borderRadius: radii.pill,
+            backgroundColor: disabled
+              ? colors.surface
+              : variant === 'primary'
+                ? colors.chicle
+                : variant === 'ghost'
+                  ? colors.surface
+                  : 'transparent',
+            borderRadius: radii.md,
             paddingVertical: compact ? spacing.three : spacing.four,
             paddingHorizontal: spacing.seven,
-            minHeight: compact ? 48 : 56,
-            borderWidth: variant === 'ghost' ? 1 : variant === 'danger' ? 1 : 0,
+            minHeight: compact ? 48 : 54,
+            borderWidth: variant === 'ghost' || variant === 'danger' ? 1 : 0,
             borderColor: variant === 'ghost' ? colors.line : colors.danger,
+            overflow: 'hidden',
           },
         ]}
       >
+        {variant === 'primary' && !disabled ? (
+          <LinearGradient
+            colors={actionGradient}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : null}
         <View style={styles.content}>
           {leading}
-          <AppText variant="hero" color={disabled ? colors.inkSoft : textColor}>
+          <AppText variant="hero" color={disabled ? colors.inkSoft : textColor} style={styles.label}>
             {label}
           </AppText>
         </View>
@@ -90,6 +101,9 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
+  },
+  label: {
+    letterSpacing: 0.2,
   },
 });

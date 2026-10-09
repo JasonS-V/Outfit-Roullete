@@ -14,9 +14,10 @@ interface ChipProps {
   selected?: boolean;
   onPress?: () => void;
   tint?: string;
+  icon?: React.ReactNode;
 }
 
-export function Chip({ label, selected, onPress, tint }: ChipProps) {
+export function Chip({ label, selected, onPress, tint, icon }: ChipProps) {
   const { colors, radii, touchTarget, spacing } = useTheme();
   return (
     <Pressable
@@ -29,16 +30,17 @@ export function Chip({ label, selected, onPress, tint }: ChipProps) {
       style={({ pressed }) => [
         styles.chip,
         {
-          minHeight: 40,
-          paddingHorizontal: spacing.five,
+          minHeight: touchTarget.min,
+          paddingHorizontal: spacing.four,
           borderRadius: radii.pill,
-          backgroundColor: selected ? (tint ?? colors.ink) : colors.surface,
+          backgroundColor: selected ? (tint ?? colors.chicle) : colors.bg,
           borderColor: selected ? 'transparent' : colors.line,
           opacity: pressed ? 0.85 : 1,
         },
       ]}
     >
-      <AppText variant="label" color={selected ? colors.bg : colors.ink}>
+      {icon}
+      <AppText variant="label" color={selected ? colors.onChicle : colors.ink}>
         {label}
       </AppText>
     </Pressable>
@@ -47,8 +49,10 @@ export function Chip({ label, selected, onPress, tint }: ChipProps) {
 
 const styles = StyleSheet.create({
   chip: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
     borderWidth: 1,
   },
 });

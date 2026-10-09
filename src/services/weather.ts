@@ -79,13 +79,13 @@ export async function fetchWeatherAt(lat: number, lon: number, city: string): Pr
 export async function searchCity(query: string): Promise<CityResult[]> {
   const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=es&format=json`;
   const json = (await fetchJson(url)) as {
-    results?: Array<{
+    results?: {
       name: string;
       admin1?: string;
       country?: string;
       latitude: number;
       longitude: number;
-    }>;
+    }[];
   };
   if (!json.results || json.results.length === 0) {
     throw new WeatherError('notfound', 'No encontramos esa ciudad');
@@ -110,14 +110,14 @@ export async function deviceCoordinates(): Promise<{ lat: number; lon: number } 
   }
 }
 
-/** Descripción breve del código WMO para el chip de clima. */
-export function describeWeatherCode(code: number): { label: string; emoji: string } {
-  if (code === 0) return { label: 'Despejado', emoji: '☀️' };
-  if (code <= 3) return { label: 'Parcialmente nublado', emoji: '⛅' };
-  if (code === 45 || code === 48) return { label: 'Neblina', emoji: '🌫️' };
-  if (code >= 71 && code <= 77) return { label: 'Nieve', emoji: '🌨️' };
-  if (code >= 95) return { label: 'Tormenta', emoji: '⛈️' };
-  if (code >= 51 && code <= 67) return { label: 'Llovizna', emoji: '🌦️' };
-  if (code >= 80 && code <= 82) return { label: 'Chubascos', emoji: '🌧️' };
-  return { label: 'Clima variable', emoji: '🌤️' };
+/** Descripción breve del código WMO para el estado del clima (sin emojis). */
+export function describeWeatherCode(code: number): { label: string; condition: 'clear' | 'partlyCloudy' | 'fog' | 'snow' | 'storm' | 'rain' | 'variable' } {
+  if (code === 0) return { label: 'Despejado', condition: 'clear' };
+  if (code <= 3) return { label: 'Parcialmente nublado', condition: 'partlyCloudy' };
+  if (code === 45 || code === 48) return { label: 'Neblina', condition: 'fog' };
+  if (code >= 71 && code <= 77) return { label: 'Nieve', condition: 'snow' };
+  if (code >= 95) return { label: 'Tormenta', condition: 'storm' };
+  if (code >= 51 && code <= 67) return { label: 'Llovizna', condition: 'rain' };
+  if (code >= 80 && code <= 82) return { label: 'Chubascos', condition: 'rain' };
+  return { label: 'Clima variable', condition: 'variable' };
 }

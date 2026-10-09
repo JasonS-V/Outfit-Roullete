@@ -1,137 +1,61 @@
-/**
- * Outfit Roulette · Tokens de diseño "Boutique Arcade"
- *
- * Razones (R-31):
- * - "Pasteles de boutique + un solo acento de arcade": los 4 pasteles pertenecen
- *   a cada carrete (codificación funcional de categorías), el rosa chicle es el
- *   único color de acción (GIRAR), el amarillo candado solo marca carretes fijados.
- * - ink (#1B1630) es un ciruela-casi negro: mantiene contraste AAA y le da
- *   temperatura de "boutique" sin caer en el negro puro de las apps genéricas.
- * - Tokens en pares claro/oscuro desde el día 1 (R-21/R-34): ambos modos se prueban.
- */
-
 export type ColorScheme = 'light' | 'dark';
 
 export const palette = {
-  // Marca
-  ink: '#1B1630',
-  inkSoft: '#5C5873',
-  chicle: '#FF3D8B',
-  candado: '#FFD60A',
-
-  // Carretes (superficies)
-  reelTop: '#FFD9EA',
-  reelBottom: '#D9E6FF',
-  reelLayer: '#D8F5E3',
-  reelShoes: '#FFF1B8',
-
-  // Neutros
-  white: '#FFFFFF',
-  surfaceLight: '#F5F4F9',
-  lineLight: '#E4E2EC',
+  ink: '#24182F', inkSoft: '#716B79', chicle: '#24182F', candado: '#C4B0DA',
+  reelTop: '#F1EBF4', reelBottom: '#F5F0ED', reelLayer: '#EEEAF0', reelShoes: '#F3F0EC',
+  white: '#FFFFFF', surfaceLight: '#F8F6F7', lineLight: '#E8E3E8',
 } as const;
 
 export const colors = {
   light: {
-    ink: '#1B1630',
-    inkSoft: '#5C5873',
-    bg: '#FFFFFF',
-    surface: '#F5F4F9',
-    surfaceRaised: '#FFFFFF',
-    line: '#E4E2EC',
-    chicle: '#FF3D8B',
-    chiclePressed: '#E62E7A',
-    onChicle: '#1B1630',
-    candado: '#FFD60A',
-    onCandado: '#1B1630',
-    reelTop: '#FFD9EA',
-    reelBottom: '#D9E6FF',
-    reelLayer: '#D8F5E3',
-    reelShoes: '#FFF1B8',
-    danger: '#A1123C',
-    scrim: 'rgba(27, 22, 48, 0.45)',
+    ink: '#24182F', inkSoft: '#716B79', bg: '#FFFFFF', surface: '#F8F6F7',
+    surfaceRaised: '#FFFFFF', glass: '#FFFFFF', line: '#E8E3E8', lineSoft: '#F1EDF1',
+    cardEdge: '#EAE5E9', sheen: 'rgba(255, 255, 255, 0.7)',
+    chicle: '#24182F', chiclePressed: '#3C2B4D', onChicle: '#FFFFFF',
+    candado: '#C4B0DA', onCandado: '#24182F',
+    reelTop: '#F1EBF4', reelBottom: '#F5F0ED', reelLayer: '#EEEAF0', reelShoes: '#F3F0EC',
+    danger: '#A13D52', scrim: 'rgba(36, 24, 47, 0.45)',
   },
   dark: {
-    ink: '#F4F2FA',
-    inkSoft: '#A9A4C0',
-    bg: '#120F1C',
-    surface: '#1D1930',
-    surfaceRaised: '#251F3D',
-    line: '#2E2946',
-    chicle: '#FF5C9E',
-    chiclePressed: '#FF7AB0',
-    onChicle: '#120F1C',
-    candado: '#FFD60A',
-    onCandado: '#120F1C',
-    reelTop: '#4A2040',
-    reelBottom: '#1E3258',
-    reelLayer: '#1B4332',
-    reelShoes: '#4B3F12',
-    danger: '#FF8FA3',
-    scrim: 'rgba(0, 0, 0, 0.55)',
+    ink: '#F7F2F7', inkSoft: '#BCB1C0', bg: '#17121D', surface: '#241C2B',
+    surfaceRaised: '#2D2335', glass: '#211929', line: '#403448', lineSoft: '#34293B',
+    cardEdge: '#47394D', sheen: 'rgba(255, 255, 255, 0.08)',
+    chicle: '#D6C3E3', chiclePressed: '#E5D8EF', onChicle: '#24182F',
+    candado: '#C4B0DA', onCandado: '#24182F',
+    reelTop: '#30263A', reelBottom: '#2C2530', reelLayer: '#29232F', reelShoes: '#2D272D',
+    danger: '#F5A5B2', scrim: 'rgba(0, 0, 0, 0.6)',
   },
 } as const;
 
 export type Theme = (typeof colors)[ColorScheme];
 
-/** Carretes por categoría: fondo pastel claro / profundo oscuro. */
 export const reelTint = {
+  light: { top: '#F1EBF4', bottom: '#F5F0ED', layer: '#EEEAF0', shoes: '#F3F0EC', onepiece: '#EEE8F3' },
+  dark: { top: '#30263A', bottom: '#2C2530', layer: '#29232F', shoes: '#2D272D', onepiece: '#34283E' },
+} as const;
+
+export const reelGradient = {
   light: {
-    top: '#FFD9EA',
-    bottom: '#D9E6FF',
-    layer: '#D8F5E3',
-    shoes: '#FFF1B8',
-    onepiece: '#E8DFFF',
+    top: ['#F7F2F8', '#ECE4F0'], bottom: ['#FAF7F5', '#F0EAE7'],
+    layer: ['#F5F1F6', '#EAE5ED'], shoes: ['#F9F6F2', '#EEE9E3'], onepiece: ['#F6F0F8', '#E8E0ED'],
   },
   dark: {
-    top: '#4A2040',
-    bottom: '#1E3258',
-    layer: '#1B4332',
-    shoes: '#4B3F12',
-    onepiece: '#33265C',
+    top: ['#382C43', '#2B2235'], bottom: ['#342A36', '#29222D'],
+    layer: ['#312A37', '#27212C'], shoes: ['#332C32', '#282328'], onepiece: ['#3B2E46', '#2D2337'],
   },
 } as const;
 
-/** Rejilla de 4pt (módulo base) + escala de espaciado 8pt. */
-export const spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
-  three: 12,
-  four: 16,
-  five: 20,
-  six: 24,
-  seven: 32,
-  eight: 40,
-  nine: 48,
+export type ReelKey = keyof (typeof reelGradient)['light'];
+
+export const actionGradient = {
+  light: ['#2C1D3B', '#24182F'], dark: ['#DCCBE8', '#CEB9DD'],
 } as const;
 
-/** Radios: tarjetas 20, hojas 28, pastilla solo para chips y CTA principal. */
-export const radii = {
-  sm: 10,
-  md: 14,
-  card: 20,
-  sheet: 28,
-  pill: 999,
-} as const;
-
-/** Áreas táctiles mínimas: 44pt iOS, 48dp Android. */
+export const spacing = { half: 2, one: 4, two: 8, three: 12, four: 16, five: 20, six: 24, seven: 32, eight: 40, nine: 48 } as const;
+export const radii = { sm: 8, md: 12, card: 18, sheet: 28, pill: 999 } as const;
 export const touchTarget = { min: 48 } as const;
 
 export const shadows = {
-  /** Elevación solo para elementos flotantes (botón GIRAR, FAB, hojas). */
-  floating: {
-    shadowColor: '#1B1630',
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
-  },
-  sheet: {
-    shadowColor: '#1B1630',
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: -6 },
-    elevation: 12,
-  },
+  floating: { shadowColor: '#24182F', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 4 },
+  sheet: { shadowColor: '#24182F', shadowOpacity: 0.12, shadowRadius: 24, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
 } as const;

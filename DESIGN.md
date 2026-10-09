@@ -1,55 +1,23 @@
-# DESIGN.md · Outfit Roulette ("Boutique Arcade")
+# Diseño visual · Outfit Roulette
 
-> Dirección de diseño del producto, derivada del documento maestro (v1.0 §15).
-> Este archivo + `Outfit_Roulette_Master_Plan.md` son la fuente de verdad para la UI.
+La dirección actual es **editorial de moda**: prendas protagonistas, titulares con serif, espacio blanco y una paleta de tinta ciruela, marfil y lavanda. La imagen de referencia del rediseño guía el tono visual; la app sigue siendo un armario personal con ruleta, no un catálogo de compras.
 
-## Design Read
+## Sistema
 
-Reading this as: app móvil de decisión diaria de outfit para estudiantes 16-28 (LATAM),
-en un lenguaje visual "Boutique Arcade" (superficies pastel por categoría, tinta ciruela,
-un único acento chicle, física de tragamonedas táctil), dial ENERGY 2 / RHYTHM 2 / MOTION 3.
+- **Tipografía:** Georgia/serif del sistema para títulos; Figtree para controles, datos y lectura. La serif aporta el gesto editorial sin añadir una fuente ni peso de descarga.
+- **Color:** fondo blanco en modo claro, ciruela `#24182F` para texto y acciones, lavanda suave para superficies de prendas. El modo oscuro conserva la misma jerarquía con superficies ciruela y acciones lavanda.
+- **Superficies:** tarjetas de prenda con fondos discretos y esquinas de 12–18 pt. Los filtros son pastillas; los botones principales son rectángulos redondeados de 12 pt.
+- **Iconografía:** monograma OR para el ícono y splash; trazos simples para navegación y acciones.
+- **Fotografía:** solo en la bienvenida, donde presenta el lenguaje editorial. El armario y los looks muestran las prendas reales del estado de la app mediante las siluetas existentes.
 
-## Dials
+## Pantallas
 
-- **ENERGY 2:** juego con energía medida: un acento fuerte (chicle) y cuatro pasteles
-  funcionales, sin ruido decorativo.
-- **RHYTHM 2:** ritmo constante entre pantallas, con quiebres deliberados: la fusión
-  "Una pieza" y el momento del giro.
-- **MOTION 3:** el giro ES el producto: aceleración, frenado escalonado, rebote y tics.
-  El resto de la app es calmada, para que el giro destaque.
+- **Bienvenida:** imagen editorial, promesa corta y una sola acción.
+- **Ruleta:** ocasión, combinación y acciones en ese orden. Se conserva el giro, el arrastre manual, los candados, el clima y las acciones secundarias.
+- **Armario y añadir prenda:** cuadrícula de dos columnas con la prenda como elemento principal. Búsqueda, filtros y detalle permanecen accesibles.
+- **Looks:** misma cuadrícula para outfits guardados, con el detalle y sus acciones en una hoja.
+- **Perfil:** ajustes agrupados, interruptores de lavanda y estadísticas reales.
 
-## Razones (una línea por decisión, R-31)
+## Accesibilidad y adaptación
 
-- **Pastel por carrete:** cada categoría tiene color propio y la ruleta se lee de un
-  vistazo sin depender de la ropa real.
-- **Tinta ciruela (#1B1630) en vez de negro puro:** conserva contraste AAA y da
-  temperatura de boutique frente al negro genérico.
-- **Un solo acento (chicle #FF3D8B):** el color de acción único convierte GIRAR en el
-  punto focal de la pantalla.
-- **Amarillo candado (#FFD60A) con tinta encima:** estado "fijado" exclusivo del candado,
-  8.5:1 de contraste, inconfundible frente al acento.
-- **Figtree:** geométrica redonda, amable y legible en pantallas pequeñas; sostiene el
-  tono de juego de boutique.
-- **Siluetas sticker (trazo grueso redondeado):** se leen como piezas de juego, rinden
-  a 40 px en la rejilla y esquivan el render fotorrealista de otras apps de armario.
-- **Radios diferenciados (20 tarjetas, 28 hojas, pastilla solo en chips y CTA):** la
-  variación de radio marca jerarquía; lo pastilla se reserva a filtros y acción principal.
-- **Sombra solo en elementos flotantes (CTA GIRAR, hojas, FAB, toasts):** una sola
-  elevación por pantalla mantiene el foco.
-- **Modo claro y oscuro desde el día 1:** la app se usa a las 6:30 AM y de noche; ambos
-  modos comparten tokens y se prueban juntos.
-- **Estados completos (vacío, carga, error):** el clima tiene sus tres estados; el
-  armario y el lookbook tienen estados vacíos con salida directa a la acción.
-
-## Reglas de microcopy
-
-- Sin em dash en ningún texto de UI (R-02).
-- Voz cercana peruana por defecto ("casaca", "chompa", "zapatillas"); diccionario
-  regional del plan §19 para siguientes iteraciones.
-- Los números visibles son reales y se calculan del estado del usuario (R-17).
-
-## Accesibilidad
-
-- Texto AA/AAA verificado por tokens (§15.1); el candado usa doble canal (forma + color).
-- Áreas táctiles mínimas de 48 dp; acentos de teclado visibles en web.
-- La ruleta completa funciona sin sonido ni vibración (son extras apagables).
+Los controles táctiles miden al menos 48 pt, las acciones tienen nombres accesibles y los estados importantes combinan texto, forma y color. La app conserva el modo oscuro automático y la navegación de Expo Router. Las listas desplazan el contenido en pantallas pequeñas.

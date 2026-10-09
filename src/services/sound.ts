@@ -9,11 +9,8 @@ import { createAudioPlayer, type AudioPlayer } from 'expo-audio';
 type SoundKey = 'tick' | 'tunc' | 'chime';
 
 const SOURCES: Record<SoundKey, number> = {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   tick: require('@/assets/sounds/tick.wav') as number,
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   tunc: require('@/assets/sounds/tunc.wav') as number,
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   chime: require('@/assets/sounds/chime.wav') as number,
 };
 

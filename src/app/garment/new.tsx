@@ -45,10 +45,11 @@ export default function NewGarmentScreen() {
         <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={() => router.back()} hitSlop={8}>
           <AppText variant="title">‹</AppText>
         </Pressable>
-        <AppText variant="title">Añadir prenda</AppText>
+        <AppText variant="title">Añadir prenda.</AppText>
         <View style={{ width: 24 }} />
       </View>
 
+      <AppText variant="micro" color={colors.inkSoft} style={styles.eyebrow}>ELIGE UNA CATEGORÍA</AppText>
       <View>
         <FlatList
           horizontal
@@ -65,7 +66,7 @@ export default function NewGarmentScreen() {
       <FlatList
         data={items}
         keyExtractor={(item) => item.key}
-        numColumns={4}
+        numColumns={2}
         columnWrapperStyle={styles.rowGap}
         contentContainerStyle={styles.grid}
         renderItem={({ item }) => (
@@ -76,20 +77,17 @@ export default function NewGarmentScreen() {
               setOpenKey(item.key);
               setColorHex(item.colorHex);
             }}
-            style={({ pressed }) => ({
-              flex: 1,
-              alignItems: 'center',
-              gap: 4,
-              opacity: pressed ? 0.7 : 1,
-            })}
+            style={({ pressed }) => [styles.basicCard, { opacity: pressed ? 0.7 : 1 }]}
           >
-            <GarmentSilhouette
-              silhouette={item.shape}
-              colorHex={item.colorHex}
-              hasPattern={item.hasPattern}
-              size={60}
-            />
-            <AppText variant="micro" numberOfLines={2} style={{ textAlign: 'center' }}>
+            <View style={[styles.basicArt, { backgroundColor: colors.reelTop, borderRadius: radii.md }]}>
+              <GarmentSilhouette
+                silhouette={item.shape}
+                colorHex={item.colorHex}
+                hasPattern={item.hasPattern}
+                size={104}
+              />
+            </View>
+            <AppText variant="label" numberOfLines={2}>
               {item.name}
             </AppText>
           </Pressable>
@@ -103,7 +101,7 @@ export default function NewGarmentScreen() {
       <Sheet visible={openBasic !== null} onClose={() => setOpenKey(null)} title={openBasic?.name}>
         {openBasic ? (
           <View style={{ gap: spacing.four }}>
-            <View style={{ alignItems: 'center' }}>
+            <View style={[styles.detailArt, { backgroundColor: colors.reelTop, borderRadius: radii.card }]}>
               <GarmentSilhouette
                 silhouette={openBasic.shape}
                 colorHex={colorHex}
@@ -155,24 +153,44 @@ export default function NewGarmentScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingTop: 12,
+    paddingBottom: 20,
+  },
+  eyebrow: {
+    letterSpacing: 1.2,
+    paddingBottom: 10,
   },
   chips: {
     gap: 8,
-    paddingBottom: 12,
+    paddingBottom: 18,
   },
   grid: {
-    gap: 14,
+    gap: 18,
     paddingBottom: 12,
   },
   rowGap: {
+    justifyContent: 'space-between',
+  },
+  basicCard: {
+    width: '48%',
+    alignItems: 'stretch',
     gap: 8,
+  },
+  basicArt: {
+    height: 144,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailArt: {
+    height: 230,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   swatches: {
     flexDirection: 'row',

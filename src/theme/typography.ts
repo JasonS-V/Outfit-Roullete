@@ -1,7 +1,4 @@
-/**
- * Tipografía Figtree (Google Fonts, empaquetada localmente).
- * Escala del documento maestro §15.2. Nombres de familia = claves de carga en fonts.ts.
- */
+import { Platform } from 'react-native';
 
 export const fontFamily = {
   regular: 'Figtree_400Regular',
@@ -9,23 +6,17 @@ export const fontFamily = {
   semiBold: 'Figtree_600SemiBold',
   bold: 'Figtree_700Bold',
   extraBold: 'Figtree_800ExtraBold',
+  editorial: Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia' }),
 } as const;
 
 export const typeScale = {
-  /** Bienvenida, Paywall */
-  display: { fontFamily: fontFamily.extraBold, fontSize: 32, lineHeight: 38 },
-  /** Encabezados de pantalla */
-  title: { fontFamily: fontFamily.bold, fontSize: 22, lineHeight: 28 },
-  /** Títulos de prendas, secciones */
-  subtitle: { fontFamily: fontFamily.semiBold, fontSize: 17, lineHeight: 24 },
-  /** Texto general */
-  body: { fontFamily: fontFamily.regular, fontSize: 16, lineHeight: 24 },
-  /** Chips de ocasión, botones secundarios */
-  label: { fontFamily: fontFamily.medium, fontSize: 14, lineHeight: 20 },
-  /** Texto del botón GIRAR */
-  hero: { fontFamily: fontFamily.extraBold, fontSize: 20, lineHeight: 24 },
-  /** Mínimo legal, notas al pie */
-  micro: { fontFamily: fontFamily.medium, fontSize: 12, lineHeight: 16 },
+  display: { fontFamily: fontFamily.editorial, fontSize: 42, lineHeight: 47, letterSpacing: -1.7 },
+  title: { fontFamily: fontFamily.editorial, fontSize: 32, lineHeight: 38, letterSpacing: -1 },
+  subtitle: { fontFamily: fontFamily.semiBold, fontSize: 17, lineHeight: 23, letterSpacing: -0.2 },
+  body: { fontFamily: fontFamily.regular, fontSize: 15, lineHeight: 23 },
+  label: { fontFamily: fontFamily.medium, fontSize: 13, lineHeight: 19 },
+  hero: { fontFamily: fontFamily.semiBold, fontSize: 15, lineHeight: 21, letterSpacing: 0.1 },
+  micro: { fontFamily: fontFamily.medium, fontSize: 11, lineHeight: 16, letterSpacing: 0.2 },
 } as const;
 
 export type TypeVariant = keyof typeof typeScale;

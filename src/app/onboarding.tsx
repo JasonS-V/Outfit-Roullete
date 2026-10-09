@@ -5,17 +5,24 @@
  */
 
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GarmentSilhouette } from '@/components/silhouettes';
 import { AppText } from '@/components/ui/AppText';
+import {
+  CheckIcon,
+  ChevronRightIcon,
+  CloudSunIcon,
+  SnowIcon,
+  SunIcon,
+} from '@/components/ui/icons';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { CityPicker } from '@/components/weather';
 import { useApp } from '@/context/AppContext';
 import type { Audience } from '@/data/catalog';
-import { BASIC_BY_KEY } from '@/data/catalog';
 import { STARTER_RECOMMENDED_COUNT, starterRows, starterSetFor } from '@/data/starter';
 import { useTheme } from '@/theme';
 
@@ -27,7 +34,7 @@ const AUDIENCE_OPTIONS: { key: Audience; label: string; note: string }[] = [
 
 export default function OnboardingScreen() {
   const app = useApp();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, radii, spacing, reelGradient } = useTheme();
   const [step, setStep] = useState(0);
   const [audience, setLocalAudience] = useState<Audience>('uni');
   const [selected, setSelected] = useState<Set<string>>(() => new Set(starterSetFor('uni').checked));
@@ -70,43 +77,39 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top', 'bottom']}>
       <View style={styles.topBar}>
-        <AppText variant="micro" color={colors.inkSoft}>
-          {step === 0 ? 'OUTFIT ROULETTE' : `Paso ${step}/3`}
+        <AppText variant="micro" color={colors.ink} style={styles.brand}>
+          {step === 0 ? 'OR  /  OUTFIT ROULETTE' : `OUTFIT ROULETTE  /  0${step}`}
         </AppText>
       </View>
 
       {step === 0 ? (
         <View style={styles.hero}>
-          <View style={styles.miniReels}>
-            {(['top', 'bottom', 'shoes'] as const).map((slot, index) => {
-              const key = ['polo_basico', 'jean_claro', 'zapas_blancas'][index];
-              const basic = BASIC_BY_KEY[key];
-              return (
-                <View
-                  key={slot}
-                  style={[styles.miniReel, { backgroundColor: colors.surface, borderRadius: radii.card }]}
-                >
-                  <GarmentSilhouette
-                    silhouette={basic.shape}
-                    colorHex={basic.colorHex}
-                    size={64}
-                  />
-                  <AppText variant="label" numberOfLines={1} style={{ flex: 1 }}>
-                    {basic.name}
-                  </AppText>
-                </View>
-              );
-            })}
+          <View style={[styles.heroImage, { borderRadius: radii.card }]}>
+            <Image
+              source={require('../../assets/images/editorial-blazer.jpg')}
+              resizeMode="cover"
+              style={styles.image}
+              accessibilityLabel="Blazer lavanda en un estudio editorial"
+            />
+            <View style={[styles.imageTag, { backgroundColor: colors.bg }]}>
+              <AppText variant="micro" style={styles.imageTagText}>EL EDITORIAL  /  01</AppText>
+            </View>
           </View>
-          <View style={{ alignItems: 'center', gap: 8 }}>
-            <AppText variant="display" style={{ textAlign: 'center' }}>
-              Outfit Roulette
+          <View style={styles.heroCopy}>
+            <AppText variant="micro" color={colors.inkSoft} style={styles.eyebrow}>
+              TU ARMARIO, REINVENTADO
             </AppText>
-            <AppText variant="body" color={colors.inkSoft} style={{ textAlign: 'center' }}>
-              Tu armario, en modo juego. Gira la ruleta y sale tu look del día en menos de 5 segundos.
+            <AppText variant="display">
+              Tu estilo.{ '\n' }Tus reglas.
+            </AppText>
+            <AppText variant="body" color={colors.inkSoft}>
+              Looks para cada día, creados con la ropa que ya tienes.
             </AppText>
           </View>
-          <PrimaryButton label="Empezar" onPress={() => setStep(1)} />
+          <PrimaryButton
+            label="Explorar mi estilo  →"
+            onPress={() => setStep(1)}
+          />
         </View>
       ) : null}
 
@@ -118,20 +121,24 @@ export default function OnboardingScreen() {
               <Pressable
                 key={option.key}
                 accessibilityRole="button"
+                accessibilityLabel={`${option.label}. ${option.note}`}
                 onPress={() => pickAudience(option.key)}
                 style={({ pressed }) => [
                   styles.option,
                   {
-                    borderColor: colors.line,
+                    borderColor: colors.cardEdge,
                     borderRadius: radii.card,
-                    backgroundColor: pressed ? colors.surface : colors.bg,
+                    backgroundColor: pressed ? colors.surfaceRaised : colors.surface,
                   },
                 ]}
               >
-                <AppText variant="subtitle">{option.label}</AppText>
-                <AppText variant="micro" color={colors.inkSoft}>
-                  {option.note}
-                </AppText>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <AppText variant="subtitle">{option.label}</AppText>
+                  <AppText variant="micro" color={colors.inkSoft}>
+                    {option.note}
+                  </AppText>
+                </View>
+                <ChevronRightIcon color={colors.inkSoft} size={20} />
               </Pressable>
             ))}
           </View>
@@ -165,7 +172,7 @@ export default function OnboardingScreen() {
                         style={({ pressed }) => [
                           styles.item,
                           {
-                            borderColor: isOn ? colors.chicle : colors.line,
+                            borderColor: isOn ? colors.chicle : colors.cardEdge,
                             borderWidth: isOn ? 2 : 1,
                             backgroundColor: colors.surface,
                             borderRadius: radii.md,
@@ -192,9 +199,7 @@ export default function OnboardingScreen() {
                           ]}
                         >
                           {isOn ? (
-                            <AppText variant="micro" color={colors.onChicle}>
-                              ✓
-                            </AppText>
+                            <CheckIcon size={12} color={colors.onChicle} strokeWidth={2.8} />
                           ) : null}
                         </View>
                       </Pressable>
@@ -230,6 +235,27 @@ export default function OnboardingScreen() {
             </AppText>
           ) : null}
           {showCityPicker ? <CityPicker onPick={(city) => { void app.setCity(city); finish(); }} /> : null}
+          <View style={styles.weatherArtWrap} pointerEvents="none">
+            <View
+              style={[
+                styles.weatherArt,
+                { backgroundColor: colors.surface, borderColor: colors.cardEdge },
+              ]}
+            >
+              <LinearGradient
+                colors={reelGradient.shoes}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              <SunIcon color={colors.ink} size={46} strokeWidth={1.7} />
+              <CloudSunIcon color={colors.ink} size={40} strokeWidth={1.6} />
+              <SnowIcon color={colors.ink} size={34} strokeWidth={1.6} />
+            </View>
+            <AppText variant="micro" color={colors.inkSoft} style={{ textAlign: 'center' }}>
+              Con clima activo, tus giros cambian solos con la temperatura.
+            </AppText>
+          </View>
           <View style={{ gap: spacing.three, marginTop: 'auto' }}>
             <PrimaryButton
               label={app.weather.status === 'loading' ? 'Leyendo clima…' : 'Usar mi ubicación'}
@@ -253,23 +279,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   topBar: {
-    alignItems: 'center',
-    paddingVertical: 8,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  brand: {
+    letterSpacing: 2,
   },
   hero: {
     flex: 1,
-    justifyContent: 'center',
-    gap: 28,
+    gap: 20,
+    paddingTop: 8,
+    paddingBottom: 20,
   },
-  miniReels: {
+  heroImage: {
+    flex: 1,
+    minHeight: 210,
+    overflow: 'hidden',
+    backgroundColor: '#EEE8F3',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  imageTag: {
+    position: 'absolute',
+    right: 12,
+    bottom: 12,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  imageTagText: {
+    letterSpacing: 1.1,
+  },
+  heroCopy: {
     gap: 8,
   },
-  miniReel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 12,
-    height: 72,
+  eyebrow: {
+    letterSpacing: 1.6,
   },
   body: {
     flex: 1,
@@ -278,11 +325,26 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   option: {
-    minHeight: 64,
-    justifyContent: 'center',
+    minHeight: 68,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     borderWidth: 1,
     paddingHorizontal: 16,
-    gap: 2,
+  },
+  weatherArtWrap: {
+    gap: 10,
+    marginTop: 20,
+  },
+  weatherArt: {
+    height: 132,
+    borderRadius: 28,
+    borderWidth: 1,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 18,
   },
   grid: {
     flexDirection: 'row',

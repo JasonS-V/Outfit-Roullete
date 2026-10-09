@@ -5,7 +5,7 @@
 
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/AppText';
@@ -17,16 +17,59 @@ import { useApp } from '@/context/AppContext';
 import { useTheme } from '@/theme';
 import { confirmDestructive } from '@/utils/confirm';
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   const { colors, radii, spacing } = useTheme();
   return (
     <View style={{ gap: spacing.two }}>
-      <AppText variant="label" color={colors.inkSoft}>
+      <AppText variant="label" color={colors.inkSoft} style={styles.sectionTitle}>
         {title.toUpperCase()}
       </AppText>
-      <View style={{ backgroundColor: colors.surface, borderRadius: radii.card, padding: spacing.four, gap: spacing.three }}>
+      <View
+        style={{
+          backgroundColor: colors.surfaceRaised,
+          borderColor: colors.cardEdge,
+          borderWidth: 1,
+          borderRadius: radii.card,
+          padding: spacing.four,
+          gap: spacing.three,
+        }}
+      >
         {children}
       </View>
+    </View>
+  );
+}
+
+/** Filo interior: separa filas dentro de una misma tarjeta. */
+function RowDivider() {
+  const { colors, spacing } = useTheme();
+  return (
+    <View style={{ height: 1, backgroundColor: colors.line, marginVertical: -spacing.one }} />
+  );
+}
+
+/** Tile de estadística: el número manda y la etiqueta lo explica. */
+function StatTile({ value, label }: { value: number; label: string }) {
+  const { colors, radii } = useTheme();
+  return (
+    <View
+      style={[
+        styles.statTile,
+        { backgroundColor: colors.surfaceRaised, borderColor: colors.cardEdge, borderRadius: radii.md },
+      ]}
+    >
+      <AppText variant="title" style={styles.statValue}>
+        {value}
+      </AppText>
+      <AppText variant="micro" color={colors.inkSoft} style={{ textAlign: 'center' }}>
+        {label}
+      </AppText>
     </View>
   );
 }
@@ -36,31 +79,41 @@ function SwitchRow({
   hint,
   value,
   onChange,
+  divider,
 }: {
   label: string;
   hint?: string;
   value: boolean;
   onChange: (v: boolean) => void;
+  divider?: boolean;
 }) {
   const { colors, spacing } = useTheme();
   return (
-    <View style={[styles.row, { gap: spacing.three }]}>
-      <View style={{ flex: 1, gap: 2 }}>
-        <AppText variant="subtitle">{label}</AppText>
-        {hint ? (
-          <AppText variant="micro" color={colors.inkSoft}>
-            {hint}
-          </AppText>
-        ) : null}
+    <>
+      {divider ? <RowDivider /> : null}
+      <View style={[styles.row, { gap: spacing.three }]}>
+        <View style={{ flex: 1, gap: 2 }}>
+          <AppText variant="subtitle">{label}</AppText>
+          {hint ? (
+            <AppText variant="micro" color={colors.inkSoft}>
+              {hint}
+            </AppText>
+          ) : null}
+        </View>
+        <Pressable
+          accessibilityRole="switch"
+          accessibilityLabel={label}
+          accessibilityState={{ checked: value }}
+          aria-checked={value}
+          onPress={() => onChange(!value)}
+          style={styles.switchTouch}
+        >
+          <View style={[styles.switchTrack, { backgroundColor: value ? colors.candado : colors.line }]}>
+            <View style={[styles.switchThumb, { backgroundColor: value ? colors.onCandado : colors.bg, marginLeft: value ? 23 : 3 }]} />
+          </View>
+        </Pressable>
       </View>
-      <Switch
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ false: colors.line, true: colors.chicle }}
-        thumbColor={colors.bg}
-        accessibilityLabel={label}
-      />
-    </View>
+    </>
   );
 }
 
@@ -111,10 +164,14 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top']}>
-      <ScrollView contentContainerStyle={{ gap: spacing.six, paddingBottom: 32 }}>
-        <AppText variant="title" style={{ paddingTop: 8 }}>
-          Yo
-        </AppText>
+      <ScrollView contentContainerStyle={{ gap: spacing.six, paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <AppText variant="micro" color={colors.inkSoft} style={styles.eyebrow}>TU ESPACIO  /  04</AppText>
+          <AppText variant="title">Perfil.</AppText>
+          <AppText variant="body" color={colors.inkSoft}>
+            Tu estilo también está en los detalles.
+          </AppText>
+        </View>
 
         <Section title="Experiencia">
           <SwitchRow
@@ -124,18 +181,21 @@ export default function ProfileScreen() {
             onChange={(v) => app.updateSettings({ soundOn: v })}
           />
           <SwitchRow
+            divider
             label="Vibración"
             hint="Feedback táctil en el giro y los candados"
             value={app.settings.hapticsOn}
             onChange={(v) => app.updateSettings({ hapticsOn: v })}
           />
           <SwitchRow
+            divider
             label="Modo caos"
             hint="Sin reglas de color ni formalidad: ideal para retos"
             value={app.settings.chaosMode}
             onChange={(v) => app.updateSettings({ chaosMode: v })}
           />
           <SwitchRow
+            divider
             label="Capa en clima templado"
             hint="Muestra el carrete de capa aunque no haga frío"
             value={app.settings.layerEnabled}
@@ -157,10 +217,11 @@ export default function ProfileScreen() {
               ))}
             </View>
           </View>
+          <RowDivider />
           <View style={{ gap: spacing.two }}>
             <AppText variant="subtitle">
               {app.weather.status === 'ready' && app.weather.data
-                ? `Clima activo: ${app.weather.data.city} · ${Math.round(app.weather.data.apparentC)}°C`
+                ? `${app.weather.data.city} · ${Math.round(app.weather.data.apparentC)}°C ahora`
                 : 'Clima sin configurar'}
             </AppText>
             <PrimaryButton label="Configurar clima" variant="ghost" onPress={() => setWeatherOpen(true)} />
@@ -168,13 +229,16 @@ export default function ProfileScreen() {
         </Section>
 
         <Section title="Tu ropero">
-          <AppText variant="body">Prendas en el armario: {active.length}</AppText>
-          <AppText variant="body">Looks guardados: {app.looks.length}</AppText>
-          <AppText variant="body">Usos registrados esta semana: {wearsThisWeek}</AppText>
+          <View style={styles.statsRow}>
+            <StatTile value={active.length} label="Prendas" />
+            <StatTile value={app.looks.length} label="Looks" />
+            <StatTile value={wearsThisWeek} label="Usos esta semana" />
+          </View>
+          <RowDivider />
           <AppText variant="body" color={colors.inkSoft}>
             {favoriteGarment
               ? `Tu prenda más usada: ${favoriteGarment.name} (${favoriteGarment.count} ${favoriteGarment.count === 1 ? 'uso' : 'usos'})`
-              : 'Aún no registras usos: toca ✅ Me lo pongo después de girar'}
+              : 'Aún no registras usos: toca Me lo pongo después de girar'}
           </AppText>
           <AppText variant="body" color={colors.inkSoft}>
             {dormant.length > 0
@@ -218,11 +282,55 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
+  },
+  header: {
+    gap: 6,
+    paddingTop: 12,
+  },
+  eyebrow: {
+    letterSpacing: 1.3,
+  },
+  sectionTitle: {
+    letterSpacing: 1.4,
+    fontSize: 11,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  statTile: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    borderWidth: 1,
+  },
+  statValue: {
+    lineHeight: 26,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  switchTouch: {
+    width: 54,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switchTrack: {
+    width: 48,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+  },
+  switchThumb: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
   },
   chipRow: {
     flexDirection: 'row',

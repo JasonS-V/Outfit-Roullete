@@ -4,6 +4,7 @@
  */
 
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +12,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { GarmentSilhouette, patternFor } from '@/components/silhouettes';
 import { AppText } from '@/components/ui/AppText';
 import { Chip } from '@/components/ui/Chip';
+import {
+  HangerIcon,
+  HeartFilledIcon,
+  HeartIcon,
+  PlusIcon,
+  SearchIcon,
+  SlidersIcon,
+} from '@/components/ui/icons';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Sheet } from '@/components/ui/Sheet';
 import { useToast } from '@/components/ui/Toast';
@@ -40,7 +49,7 @@ const SLOT_NAMES: Record<Slot, string> = {
 
 export default function WardrobeScreen() {
   const app = useApp();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, actionGradient, radii, spacing } = useTheme();
   const { showToast } = useToast();
   const [category, setCategory] = useState<SlotFilter>('all');
   const [query, setQuery] = useState('');
@@ -66,37 +75,37 @@ export default function WardrobeScreen() {
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.bg,
           borderRadius: radii.card,
           opacity: pressed ? 0.85 : garment.isLaundry ? 0.55 : 1,
         },
       ]}
     >
-      <View style={styles.cardArt}>
+      <View style={[styles.cardArt, { backgroundColor: colors.reelTop, borderRadius: radii.md }]}>
         <GarmentSilhouette
           silhouette={garment.silhouette}
           colorHex={garment.colorHex}
           hasPattern={garment.hasPattern}
           pattern={patternFor(garment.basicKey)}
-          size={72}
+          size={112}
         />
       </View>
-      <AppText variant="micro" numberOfLines={2} style={styles.cardName}>
+      <AppText variant="label" numberOfLines={2} style={styles.cardName}>
         {garment.name}
       </AppText>
       <AppText variant="micro" color={colors.inkSoft} numberOfLines={1}>
         {garment.colorName}
       </AppText>
       {garment.isFavorite ? (
-        <AppText variant="micro" style={styles.badgeStar}>
-          ⭐
-        </AppText>
+        <View style={styles.badgeStar}>
+          <HeartFilledIcon color={colors.chicle} size={15} />
+        </View>
       ) : null}
       {garment.isLaundry ? (
         <View
           style={[
             styles.laundry,
-            { backgroundColor: colors.ink, borderRadius: radii.sm, left: 4, right: 4 },
+            { backgroundColor: colors.ink, borderRadius: radii.sm, left: 6, right: 6 },
           ]}
         >
           <AppText variant="micro" color={colors.bg} style={{ fontSize: 10, textAlign: 'center' }}>
@@ -110,23 +119,34 @@ export default function WardrobeScreen() {
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={styles.header}>
-        <AppText variant="title">Mi armario ({active.length} prendas)</AppText>
-        <TextInput
-          accessibilityLabel="Buscar en el armario"
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Buscar…"
-          placeholderTextColor={colors.inkSoft}
+        <AppText variant="micro" color={colors.inkSoft} style={styles.eyebrow}>TU COLECCIÓN  /  02</AppText>
+        <View style={styles.titleRow}>
+          <AppText variant="title">Mi armario.</AppText>
+          <View
+            style={[styles.countBadge, { backgroundColor: colors.surface, borderColor: colors.cardEdge }]}
+          >
+            <AppText variant="micro" color={colors.inkSoft}>
+              {active.length} {active.length === 1 ? 'prenda' : 'prendas'}
+            </AppText>
+          </View>
+        </View>
+        <View
           style={[
-            styles.search,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.line,
-              borderRadius: radii.pill,
-              color: colors.ink,
-            },
+            styles.searchWrap,
+            { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.md },
           ]}
-        />
+        >
+          <SearchIcon color={colors.inkSoft} size={18} />
+          <TextInput
+            accessibilityLabel="Buscar en el armario"
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Buscar por prenda o color"
+            placeholderTextColor={colors.inkSoft}
+            style={[styles.search, { color: colors.ink }]}
+          />
+          <SlidersIcon color={colors.inkSoft} size={18} />
+        </View>
       </View>
 
       <View>
@@ -144,16 +164,26 @@ export default function WardrobeScreen() {
 
       {active.length === 0 ? (
         <View style={styles.empty}>
+          <View style={[styles.emptyArt, { borderColor: colors.line, backgroundColor: colors.surface }]}>
+            <HangerIcon color={colors.inkSoft} size={44} strokeWidth={1.6} />
+          </View>
           <AppText variant="subtitle" style={{ textAlign: 'center' }}>
             Tu armario está vacío
           </AppText>
           <AppText variant="body" color={colors.inkSoft} style={{ textAlign: 'center' }}>
             Agrega ropa con una foto o elige de los básicos.
           </AppText>
-          <PrimaryButton label="＋ Añadir prenda" onPress={() => router.push('/garment/new')} />
+          <PrimaryButton
+            label="Añadir prenda"
+            leading={<PlusIcon size={18} color={colors.onChicle} />}
+            onPress={() => router.push('/garment/new')}
+          />
         </View>
       ) : filtered.length === 0 ? (
         <View style={styles.empty}>
+          <View style={[styles.emptyArt, { borderColor: colors.line, backgroundColor: colors.surface }]}>
+            <SearchIcon color={colors.inkSoft} size={38} strokeWidth={1.7} />
+          </View>
           <AppText variant="body" color={colors.inkSoft} style={{ textAlign: 'center' }}>
             No hay prendas que coincidan con ese filtro.
           </AppText>
@@ -162,7 +192,8 @@ export default function WardrobeScreen() {
         <FlatList
           data={filtered}
           keyExtractor={(g) => g.id}
-          numColumns={3}
+          numColumns={2}
+          showsVerticalScrollIndicator={false}
           columnWrapperStyle={styles.rowGap}
           contentContainerStyle={styles.grid}
           renderItem={({ item }) => renderCard(item)}
@@ -176,19 +207,26 @@ export default function WardrobeScreen() {
         style={({ pressed }) => [
           styles.fab,
           {
-            backgroundColor: colors.chicle,
             borderRadius: radii.pill,
             opacity: pressed ? 0.85 : 1,
           },
         ]}
       >
-        <AppText variant="hero">＋</AppText>
+        <LinearGradient
+          colors={actionGradient}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.fabIcon}>
+          <PlusIcon color={colors.onChicle} size={26} />
+        </View>
       </Pressable>
 
       <Sheet visible={detail !== null} onClose={() => setDetailId(null)} title={detail?.name}>
         {detail ? (
           <View style={{ gap: spacing.four }}>
-            <View style={{ alignItems: 'center' }}>
+            <View style={[styles.detailArt, { backgroundColor: colors.reelTop, borderRadius: radii.card }]}>
               <GarmentSilhouette
                 silhouette={detail.silhouette}
                 colorHex={detail.colorHex}
@@ -197,14 +235,14 @@ export default function WardrobeScreen() {
                 size={168}
               />
             </View>
-            <AppText variant="label" color={colors.inkSoft} style={{ textAlign: 'center' }}>
+            <AppText variant="label" color={colors.inkSoft}>
               {SLOT_NAMES[detail.slot]} · {detail.colorName}
             </AppText>
-            <AppText variant="micro" color={colors.inkSoft} style={{ textAlign: 'center' }}>
+            <AppText variant="micro" color={colors.inkSoft}>
               Abrigo {detail.warmth}/4 · Formalidad {detail.formality}/5
               {detail.tags.length > 0 ? ` · ${detail.tags.join(', ')}` : ''}
             </AppText>
-            <AppText variant="micro" color={colors.inkSoft} style={{ textAlign: 'center' }}>
+            <AppText variant="micro" color={colors.inkSoft}>
               {(() => {
                 const info = app.lastWornInfo(detail.id);
                 if (!info) return 'Sin usos registrados todavía';
@@ -213,8 +251,15 @@ export default function WardrobeScreen() {
               })()}
             </AppText>
             <PrimaryButton
-              label={detail.isFavorite ? '⭐ Quitar de favoritas' : '⭐ Marcar como favorita'}
+              label={detail.isFavorite ? 'Quitar de favoritas' : 'Marcar como favorita'}
               variant="ghost"
+              leading={
+                detail.isFavorite ? (
+                  <HeartFilledIcon size={18} color={colors.chicle} />
+                ) : (
+                  <HeartIcon size={18} color={colors.ink} />
+                )
+              }
               onPress={() => app.toggleFavoriteGarment(detail.id)}
             />
             <PrimaryButton
@@ -247,49 +292,77 @@ export default function WardrobeScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   header: {
-    gap: 10,
-    paddingTop: 8,
-    paddingBottom: 12,
+    gap: 12,
+    paddingTop: 12,
+    paddingBottom: 14,
+  },
+  eyebrow: {
+    letterSpacing: 1.3,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  countBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 46,
+    borderWidth: 1,
+    paddingHorizontal: 14,
   },
   search: {
-    minHeight: 44,
-    borderWidth: 1,
-    paddingHorizontal: 16,
+    flex: 1,
+    paddingVertical: 10,
     fontFamily: 'Figtree_500Medium',
     fontSize: 15,
   },
   chips: {
     gap: 8,
-    paddingBottom: 12,
+    paddingBottom: 18,
   },
   grid: {
-    gap: 10,
+    gap: 20,
     paddingBottom: 96,
   },
   rowGap: {
-    gap: 10,
+    justifyContent: 'space-between',
   },
   card: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 4,
-    gap: 2,
+    width: '48%',
+    alignItems: 'flex-start',
+    gap: 3,
   },
   cardArt: {
-    height: 76,
+    width: '100%',
+    height: 154,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  detailArt: {
+    height: 230,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   cardName: {
-    textAlign: 'center',
+    paddingHorizontal: 2,
   },
   badgeStar: {
     position: 'absolute',
-    top: 6,
-    left: 8,
+    top: 10,
+    right: 10,
   },
   laundry: {
     position: 'absolute',
@@ -304,18 +377,31 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 24,
   },
-  fab: {
-    position: 'absolute',
-    right: 16,
-    bottom: 24,
-    width: 56,
-    height: 56,
+  emptyArt: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#1B1630',
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
+    marginBottom: 4,
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 24,
+    width: 58,
+    height: 58,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    shadowColor: '#24182F',
+    shadowOpacity: 0.16,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 7 },
     elevation: 6,
+  },
+  fabIcon: {
+    zIndex: 1,
   },
 });

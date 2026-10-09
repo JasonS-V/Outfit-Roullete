@@ -6,7 +6,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { useTheme } from '@/theme';
+import { fontFamily, useTheme } from '@/theme';
 
 interface SheetProps {
   visible: boolean;
@@ -53,12 +53,12 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
               marginTop: spacing.three,
             }}
           />
-          <View style={{ alignItems: 'center' }}>
+          <View>
             <Animated.Text
               style={{
-                fontFamily: 'Figtree_700Bold',
-                fontSize: 22,
-                lineHeight: 28,
+                fontFamily: fontFamily.editorial,
+                fontSize: 28,
+                lineHeight: 34,
                 color: colors.ink,
               }}
             >
