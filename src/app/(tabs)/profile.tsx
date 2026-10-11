@@ -10,11 +10,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/AppText';
 import { Chip } from '@/components/ui/Chip';
+import { ChevronRightIcon } from '@/components/ui/icons';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useToast } from '@/components/ui/Toast';
 import { WeatherSheet } from '@/components/weather';
 import { useApp } from '@/context/AppContext';
-import { useTheme } from '@/theme';
+import { themeColorOptions, useTheme, type ThemeMode } from '@/theme';
 import { confirmDestructive } from '@/utils/confirm';
 
 function Section({
@@ -117,11 +118,74 @@ function SwitchRow({
   );
 }
 
+const modeOptions: { key: ThemeMode; label: string }[] = [
+  { key: 'system', label: 'Sistema' },
+  { key: 'light', label: 'Claro' },
+  { key: 'dark', label: 'Oscuro' },
+];
+
+function AppearanceDropdown<T extends string>({
+  label,
+  options,
+  value,
+  expanded,
+  onToggle,
+  onSelect,
+}: {
+  label: string;
+  options: { key: T; label: string; swatch?: string }[];
+  value: T;
+  expanded: boolean;
+  onToggle: () => void;
+  onSelect: (key: T) => void;
+}) {
+  const { colors, radii, spacing } = useTheme();
+  const selected = options.find((option) => option.key === value)!;
+
+  return (
+    <View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${selected.label}`}
+        accessibilityState={{ expanded }}
+        onPress={onToggle}
+        style={[styles.appearanceTrigger, { borderColor: colors.line, borderRadius: radii.md, paddingHorizontal: spacing.four }]}
+      >
+        <AppText variant="subtitle" style={{ flex: 1 }}>{label}</AppText>
+        {selected.swatch ? <View style={[styles.themeSwatch, { backgroundColor: selected.swatch, borderColor: colors.line }]} /> : null}
+        <AppText variant="body" color={colors.inkSoft}>{selected.label}</AppText>
+        <View style={{ transform: [{ rotate: expanded ? '-90deg' : '90deg' }] }}>
+          <ChevronRightIcon size={18} color={colors.inkSoft} />
+        </View>
+      </Pressable>
+      {expanded ? (
+        <View style={{ paddingTop: spacing.one }}>
+          {options.map((option) => (
+            <Pressable
+              key={option.key}
+              accessibilityRole="button"
+              accessibilityLabel={`${label}: ${option.label}`}
+              accessibilityState={{ selected: value === option.key }}
+              onPress={() => onSelect(option.key)}
+              style={[styles.appearanceOption, { borderBottomColor: colors.lineSoft, paddingHorizontal: spacing.four }]}
+            >
+              {option.swatch ? <View style={[styles.themeSwatch, { backgroundColor: option.swatch, borderColor: colors.line }]} /> : null}
+              <AppText variant="body" style={{ flex: 1 }}>{option.label}</AppText>
+              {value === option.key ? <AppText variant="label" color={colors.inkSoft}>✓</AppText> : null}
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 export default function ProfileScreen() {
   const app = useApp();
   const { colors, spacing } = useTheme();
   const { showToast } = useToast();
   const [weatherOpen, setWeatherOpen] = useState(false);
+  const [appearanceOpen, setAppearanceOpen] = useState<'mode' | 'color' | null>(null);
 
   const active = useMemo(() => app.garments.filter((g) => !g.isArchived), [app.garments]);
 
@@ -166,10 +230,9 @@ export default function ProfileScreen() {
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top']}>
       <ScrollView contentContainerStyle={{ gap: spacing.six, paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <AppText variant="micro" color={colors.inkSoft} style={styles.eyebrow}>TU ESPACIO  /  04</AppText>
-          <AppText variant="title">Perfil.</AppText>
+          <AppText variant="title">Ajustes</AppText>
           <AppText variant="body" color={colors.inkSoft}>
-            Tu estilo también está en los detalles.
+            Haz que los looks se adapten a ti.
           </AppText>
         </View>
 
@@ -200,6 +263,25 @@ export default function ProfileScreen() {
             hint="Muestra el carrete de capa aunque no haga frío"
             value={app.settings.layerEnabled}
             onChange={(v) => app.updateSettings({ layerEnabled: v })}
+          />
+        </Section>
+
+        <Section title="Apariencia">
+          <AppearanceDropdown
+            label="Modo"
+            options={modeOptions}
+            value={app.settings.themeMode}
+            expanded={appearanceOpen === 'mode'}
+            onToggle={() => setAppearanceOpen(appearanceOpen === 'mode' ? null : 'mode')}
+            onSelect={(themeMode) => { app.updateSettings({ themeMode }); setAppearanceOpen(null); }}
+          />
+          <AppearanceDropdown
+            label="Color"
+            options={themeColorOptions}
+            value={app.settings.themeColor}
+            expanded={appearanceOpen === 'color'}
+            onToggle={() => setAppearanceOpen(appearanceOpen === 'color' ? null : 'color')}
+            onSelect={(themeColor) => { app.updateSettings({ themeColor }); setAppearanceOpen(null); }}
           />
         </Section>
 
@@ -265,13 +347,12 @@ export default function ProfileScreen() {
             }}
           />
           <AppText variant="micro" color={colors.inkSoft}>
-            Versión de desarrollo: en este sprint tu armario vive en memoria. La base de datos local
-            (SQLite) llega en el siguiente sprint contigo: nada viaja a internet.
+            Tus prendas y looks se guardan solo durante esta sesión.
           </AppText>
         </Section>
 
         <AppText variant="micro" color={colors.inkSoft} style={{ textAlign: 'center' }}>
-          Outfit Roulette · versión 1.0.0 (Sprint 1) · Gira. Bloquea. Vístete.
+          Outfit Roulette · Tu ropa, nuevas combinaciones.
         </AppText>
       </ScrollView>
       <WeatherSheet visible={weatherOpen} onClose={() => setWeatherOpen(false)} />
@@ -282,14 +363,14 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
     paddingHorizontal: 20,
   },
   header: {
     gap: 6,
-    paddingTop: 12,
-  },
-  eyebrow: {
-    letterSpacing: 1.3,
+    paddingTop: 18,
   },
   sectionTitle: {
     letterSpacing: 1.4,
@@ -336,5 +417,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  appearanceTrigger: {
+    minHeight: 52,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  appearanceOption: {
+    minHeight: 48,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  themeSwatch: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
   },
 });

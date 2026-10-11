@@ -361,11 +361,10 @@ El candado es la característica que transforma un generador aleatorio en una he
 
 ### 7.2 Microinteracciones y Gestos
 1. **Toque en el candado:** Escala el botón $1.0 \rightarrow 1.2 \rightarrow 1.0$ en 120 ms con vibración física.
-2. **Bloqueo automático por deslizamiento manual:**  
+2. **Selección por deslizamiento manual:**
    Si el usuario navega manualmente deslizando un carrete hacia arriba o abajo para elegir una prenda a mano:
    - La prenda se centra automáticamente con efecto imán (*snap*).
-   - **El candado de esa fila se activa automáticamente.**  
-   *Regla de usabilidad:* "Si el usuario se tomó el trabajo de elegirla, la app asume que se la quiere poner".
+   - El candado solo se activa al tocarlo explícitamente.
 3. **Protección contra bloqueo total:**  
    Si los 4 carretes (o los 3 activos) están bloqueados, el botón `GIRAR` se atenúa y su etiqueta cambia a:  
    `[ Desbloquea al menos un carrete ]`.
@@ -1064,7 +1063,7 @@ CASOS DE PRUEBA ESENCIALES (Checklist de Release):
 [ ] 03. Candado Abajo: El carrete inferior no cambia; el resto sí.
 [ ] 04. Candado Calzado: El carrete de calzado no cambia; el resto sí.
 [ ] 05. Bloqueo total: Al bloquear todos los carretes, el botón Girar se desactiva con mensaje claro.
-[ ] 06. Deslizar carrete a mano: Seleccionar prenda manualmente activa el candado de esa fila.
+[ ] 06. Deslizar carrete a mano: Seleccionar prenda manualmente deja el candado sin cambios.
 [ ] 07. Botón Deshacer: Restaura con exactitud la combinación previa al último giro.
 
 2. CONDICIONES CLIMÁTICAS Y OCASIÓN

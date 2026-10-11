@@ -28,6 +28,8 @@ import type {
 } from '@/engine';
 import { setHapticsEnabled } from '@/services/haptics';
 import { setSoundEnabled } from '@/services/sound';
+import { ThemePreferencesContext } from '@/theme';
+import type { ThemeColor, ThemeMode } from '@/theme/tokens';
 import {
   cachedWeather,
   deviceCoordinates,
@@ -38,6 +40,8 @@ import {
 } from '@/services/weather';
 
 export interface SpinSettingsState {
+  themeColor: ThemeColor;
+  themeMode: ThemeMode;
   soundOn: boolean;
   hapticsOn: boolean;
   /** -2 caluroso/a · 0 neutro · +2 friolento/a */
@@ -135,12 +139,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return cached ? { status: 'ready', data: cached } : { status: 'idle' };
   });
   const [settings, setSettings] = useState<SpinSettingsState>({
+    themeColor: 'sage',
+    themeMode: 'system',
     soundOn: true,
     hapticsOn: true,
     personalOffsetC: 0,
     chaosMode: false,
     layerEnabled: false,
   });
+  const themePreferences = useMemo(() => ({ color: settings.themeColor, mode: settings.themeMode }), [settings.themeColor, settings.themeMode]);
   const [showLockTip, setShowLockTip] = useState(false);
 
   // Espejo estable para acciones que necesitan el estado más reciente.
@@ -290,7 +297,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!prev) return { [slot]: garment, breakdown: zeroBreakdown() } as Candidate;
       return { ...prev, [slot]: garment };
     });
-    setLocks((prev) => ({ ...prev, [slot]: garmentId }));
   }, []);
 
   const undo = useCallback(() => {
@@ -564,7 +570,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ],
   );
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <ThemePreferencesContext.Provider value={themePreferences}>
+      <AppContext.Provider value={value}>{children}</AppContext.Provider>
+    </ThemePreferencesContext.Provider>
+  );
 }
 
 export function useApp(): AppContextType {

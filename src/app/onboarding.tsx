@@ -77,14 +77,24 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top', 'bottom']}>
       <View style={styles.topBar}>
+        {step > 0 ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Volver al paso anterior"
+            onPress={() => setStep(step - 1)}
+            style={styles.backButton}
+          >
+            <AppText variant="title">‹</AppText>
+          </Pressable>
+        ) : null}
         <AppText variant="micro" color={colors.ink} style={styles.brand}>
-          {step === 0 ? 'OR  /  OUTFIT ROULETTE' : `OUTFIT ROULETTE  /  0${step}`}
+          {step === 0 ? 'OUTFIT ROULETTE' : `PASO ${step} DE 3`}
         </AppText>
       </View>
 
       {step === 0 ? (
-        <View style={styles.hero}>
-          <View style={[styles.heroImage, { borderRadius: radii.card }]}>
+        <ScrollView contentContainerStyle={styles.hero} showsVerticalScrollIndicator={false}>
+          <View style={[styles.heroImage, { borderRadius: radii.card, backgroundColor: colors.surface }]}>
             <Image
               source={require('../../assets/images/editorial-blazer.jpg')}
               resizeMode="cover"
@@ -100,17 +110,17 @@ export default function OnboardingScreen() {
               TU ARMARIO, REINVENTADO
             </AppText>
             <AppText variant="display">
-              Tu estilo.{ '\n' }Tus reglas.
+              Tu ropa.{ '\n' }Más posibilidades.
             </AppText>
             <AppText variant="body" color={colors.inkSoft}>
               Looks para cada día, creados con la ropa que ya tienes.
             </AppText>
           </View>
           <PrimaryButton
-            label="Explorar mi estilo  →"
+            label="Empezar"
             onPress={() => setStep(1)}
           />
-        </View>
+        </ScrollView>
       ) : null}
 
       {step === 1 ? (
@@ -152,9 +162,9 @@ export default function OnboardingScreen() {
         <View style={styles.body}>
           <AppText variant="title">Arma tu armario inicial</AppText>
           <AppText variant="body" color={colors.inkSoft}>
-            Toca las prendas que tienes en tu ropero. Llevas {chosenCount} de {STARTER_RECOMMENDED_COUNT} recomendadas.
+            Toca las prendas que se parecen a las tuyas. Llevas {chosenCount} de {STARTER_RECOMMENDED_COUNT} recomendadas.
           </AppText>
-          <ScrollView contentContainerStyle={{ gap: spacing.five, paddingVertical: spacing.four }}>
+          <ScrollView contentContainerStyle={{ gap: spacing.five, paddingVertical: spacing.four }} showsVerticalScrollIndicator={false}>
             {rows.map((row) => (
               <View key={row.label} style={{ gap: spacing.two }}>
                 <AppText variant="label" color={colors.inkSoft}>
@@ -219,7 +229,7 @@ export default function OnboardingScreen() {
       ) : null}
 
       {step === 3 ? (
-        <View style={styles.body}>
+        <ScrollView contentContainerStyle={styles.bodyScroll} showsVerticalScrollIndicator={false}>
           <AppText variant="title">¿Adaptamos tus outfits al clima de hoy?</AppText>
           <AppText variant="body" color={colors.inkSoft}>
             Con el clima activo, la ruleta enciende sola tu capa de abrigo cuando haga frío.
@@ -265,9 +275,9 @@ export default function OnboardingScreen() {
               disabled={app.weather.status === 'loading'}
             />
             <PrimaryButton label="Elegir mi ciudad" variant="ghost" onPress={() => setShowCityPicker(true)} />
-            <PrimaryButton label="Ahora no" variant="ghost" onPress={finish} />
+            <PrimaryButton label={app.weather.status === 'ready' ? 'Continuar con este clima' : 'Ahora no'} variant="ghost" onPress={finish} />
           </View>
-        </View>
+        </ScrollView>
       ) : null}
     </SafeAreaView>
   );
@@ -276,17 +286,29 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
     paddingHorizontal: 20,
   },
   topBar: {
-    paddingTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: 8,
     paddingBottom: 8,
+  },
+  backButton: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   brand: {
     letterSpacing: 2,
   },
   hero: {
-    flex: 1,
+    flexGrow: 1,
     gap: 20,
     paddingTop: 8,
     paddingBottom: 20,
@@ -295,7 +317,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 210,
     overflow: 'hidden',
-    backgroundColor: '#EEE8F3',
   },
   image: {
     width: '100%',
@@ -320,6 +341,12 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+    gap: 8,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  bodyScroll: {
+    flexGrow: 1,
     gap: 8,
     paddingTop: 8,
     paddingBottom: 16,

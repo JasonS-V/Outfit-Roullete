@@ -4,7 +4,7 @@
  * Física: aceleración instantánea, desaceleración bezier larga y un
  * rebote corto al aterrizar (withSpring). Tics de sonido/vibración al
  * cruzar cada fila. Arrastre manual con imán (snap) que el padre convierte
- * en selección + candado automático (§7.2).
+ * en selección de prenda.
  *
  * El carrete conserva la interacción original sobre una tarjeta editorial.
  */
@@ -259,28 +259,28 @@ export function RouletteReel({
   }));
 
   return (
-    <GestureDetector gesture={pan}>
-      <View
-        accessibilityLabel={`Carrete ${slotLabel}${locked ? ', fijado' : ''}`}
-        style={[
-          styles.card,
-          {
-            height: H,
-            backgroundColor: reelTint[tintKey],
-            borderColor: locked ? colors.ink : colors.cardEdge,
-            borderWidth: locked ? 1.5 : 1,
-          },
-        ]}
-      >
-        <LinearGradient
-          colors={reelGradient[tintKey]}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        {/* Filo superior: una línea de luz que asienta la tarjeta sobre el fondo. */}
-        <View pointerEvents="none" style={[styles.sheen, { backgroundColor: colors.sheen }]} />
+    <View
+      accessibilityLabel={`Carrete ${slotLabel}${locked ? ', fijado' : ''}`}
+      style={[
+        styles.card,
+        {
+          height: H,
+          backgroundColor: reelTint[tintKey],
+          borderColor: locked ? colors.ink : colors.cardEdge,
+          borderWidth: locked ? 1.5 : 1,
+        },
+      ]}
+    >
+      <LinearGradient
+        colors={reelGradient[tintKey]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      {/* Filo superior: una línea de luz que asienta la tarjeta sobre el fondo. */}
+      <View pointerEvents="none" style={[styles.sheen, { backgroundColor: colors.sheen }]} />
 
+      <GestureDetector gesture={pan}>
         <View
           style={[
             styles.window,
@@ -306,12 +306,12 @@ export function RouletteReel({
             )}
           </View>
         </View>
+      </GestureDetector>
 
-        <View style={[styles.lockWrap, { top: (H - 48) / 2 }]}>
-          <LockButton locked={locked} onToggle={onToggleLock} disabled={spinning} />
-        </View>
+      <View style={[styles.lockWrap, { top: (H - 48) / 2 }]}>
+        <LockButton locked={locked} onToggle={onToggleLock} disabled={spinning} />
       </View>
-    </GestureDetector>
+    </View>
   );
 }
 

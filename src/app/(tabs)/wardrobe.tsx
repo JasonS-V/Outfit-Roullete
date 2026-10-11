@@ -4,7 +4,6 @@
  */
 
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +17,6 @@ import {
   HeartIcon,
   PlusIcon,
   SearchIcon,
-  SlidersIcon,
 } from '@/components/ui/icons';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Sheet } from '@/components/ui/Sheet';
@@ -49,7 +47,7 @@ const SLOT_NAMES: Record<Slot, string> = {
 
 export default function WardrobeScreen() {
   const app = useApp();
-  const { colors, actionGradient, radii, spacing } = useTheme();
+  const { colors, reelTint, radii, spacing } = useTheme();
   const { showToast } = useToast();
   const [category, setCategory] = useState<SlotFilter>('all');
   const [query, setQuery] = useState('');
@@ -75,13 +73,14 @@ export default function WardrobeScreen() {
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: colors.bg,
+          backgroundColor: colors.surfaceRaised,
+          borderColor: colors.line,
           borderRadius: radii.card,
           opacity: pressed ? 0.85 : garment.isLaundry ? 0.55 : 1,
         },
       ]}
     >
-      <View style={[styles.cardArt, { backgroundColor: colors.reelTop, borderRadius: radii.md }]}>
+      <View style={[styles.cardArt, { backgroundColor: reelTint[garment.slot], borderRadius: radii.md }]}>
         <GarmentSilhouette
           silhouette={garment.silhouette}
           colorHex={garment.colorHex}
@@ -119,16 +118,21 @@ export default function WardrobeScreen() {
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top']}>
       <View style={styles.header}>
-        <AppText variant="micro" color={colors.inkSoft} style={styles.eyebrow}>TU COLECCIÓN  /  02</AppText>
         <View style={styles.titleRow}>
-          <AppText variant="title">Mi armario.</AppText>
-          <View
-            style={[styles.countBadge, { backgroundColor: colors.surface, borderColor: colors.cardEdge }]}
-          >
-            <AppText variant="micro" color={colors.inkSoft}>
-              {active.length} {active.length === 1 ? 'prenda' : 'prendas'}
+          <View style={styles.titleCopy}>
+            <AppText variant="title">Tu armario</AppText>
+            <AppText variant="label" color={colors.inkSoft}>
+              {active.length} {active.length === 1 ? 'prenda' : 'prendas'} para combinar
             </AppText>
           </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Añadir prenda"
+            onPress={() => router.push('/garment/new')}
+            style={({ pressed }) => [styles.addButton, { backgroundColor: colors.chicle, borderRadius: radii.md, opacity: pressed ? 0.8 : 1 }]}
+          >
+            <PlusIcon color={colors.onChicle} size={25} />
+          </Pressable>
         </View>
         <View
           style={[
@@ -145,7 +149,6 @@ export default function WardrobeScreen() {
             placeholderTextColor={colors.inkSoft}
             style={[styles.search, { color: colors.ink }]}
           />
-          <SlidersIcon color={colors.inkSoft} size={18} />
         </View>
       </View>
 
@@ -171,7 +174,7 @@ export default function WardrobeScreen() {
             Tu armario está vacío
           </AppText>
           <AppText variant="body" color={colors.inkSoft} style={{ textAlign: 'center' }}>
-            Agrega ropa con una foto o elige de los básicos.
+            Elige prendas de la biblioteca para empezar a combinar.
           </AppText>
           <PrimaryButton
             label="Añadir prenda"
@@ -187,6 +190,11 @@ export default function WardrobeScreen() {
           <AppText variant="body" color={colors.inkSoft} style={{ textAlign: 'center' }}>
             No hay prendas que coincidan con ese filtro.
           </AppText>
+          <PrimaryButton
+            label="Limpiar filtros"
+            variant="ghost"
+            onPress={() => { setCategory('all'); setQuery(''); }}
+          />
         </View>
       ) : (
         <FlatList
@@ -200,33 +208,10 @@ export default function WardrobeScreen() {
         />
       )}
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Añadir prenda"
-        onPress={() => router.push('/garment/new')}
-        style={({ pressed }) => [
-          styles.fab,
-          {
-            borderRadius: radii.pill,
-            opacity: pressed ? 0.85 : 1,
-          },
-        ]}
-      >
-        <LinearGradient
-          colors={actionGradient}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.fabIcon}>
-          <PlusIcon color={colors.onChicle} size={26} />
-        </View>
-      </Pressable>
-
       <Sheet visible={detail !== null} onClose={() => setDetailId(null)} title={detail?.name}>
         {detail ? (
           <View style={{ gap: spacing.four }}>
-            <View style={[styles.detailArt, { backgroundColor: colors.reelTop, borderRadius: radii.card }]}>
+            <View style={[styles.detailArt, { backgroundColor: reelTint[detail.slot], borderRadius: radii.card }]}>
               <GarmentSilhouette
                 silhouette={detail.silhouette}
                 colorHex={detail.colorHex}
@@ -292,15 +277,15 @@ export default function WardrobeScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
     paddingHorizontal: 20,
   },
   header: {
-    gap: 12,
-    paddingTop: 12,
-    paddingBottom: 14,
-  },
-  eyebrow: {
-    letterSpacing: 1.3,
+    gap: 18,
+    paddingTop: 18,
+    paddingBottom: 18,
   },
   titleRow: {
     flexDirection: 'row',
@@ -308,11 +293,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
-  countBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
+  titleCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  addButton: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchWrap: {
     flexDirection: 'row',
@@ -334,7 +323,7 @@ const styles = StyleSheet.create({
   },
   grid: {
     gap: 20,
-    paddingBottom: 96,
+    paddingBottom: 24,
   },
   rowGap: {
     justifyContent: 'space-between',
@@ -343,6 +332,8 @@ const styles = StyleSheet.create({
     width: '48%',
     alignItems: 'flex-start',
     gap: 3,
+    padding: 8,
+    borderWidth: 1,
   },
   cardArt: {
     width: '100%',
@@ -385,23 +376,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 24,
-    width: 58,
-    height: 58,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    shadowColor: '#24182F',
-    shadowOpacity: 0.16,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 7 },
-    elevation: 6,
-  },
-  fabIcon: {
-    zIndex: 1,
   },
 });

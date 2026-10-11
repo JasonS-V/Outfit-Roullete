@@ -30,7 +30,7 @@ const SLOT_TABS: { key: Slot; label: string }[] = [
 
 export default function NewGarmentScreen() {
   const app = useApp();
-  const { colors, radii, spacing } = useTheme();
+  const { colors, reelTint, radii, spacing } = useTheme();
   const { showToast } = useToast();
   const [slot, setSlot] = useState<Slot>('top');
   const [openKey, setOpenKey] = useState<string | null>(null);
@@ -42,14 +42,13 @@ export default function NewGarmentScreen() {
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={() => router.back()} hitSlop={8}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Volver al armario" onPress={() => router.back()} style={styles.backButton}>
           <AppText variant="title">‹</AppText>
         </Pressable>
-        <AppText variant="title">Añadir prenda.</AppText>
-        <View style={{ width: 24 }} />
+        <AppText variant="title" style={styles.headerTitle}>Añadir prenda</AppText>
       </View>
 
-      <AppText variant="micro" color={colors.inkSoft} style={styles.eyebrow}>ELIGE UNA CATEGORÍA</AppText>
+      <AppText variant="body" color={colors.inkSoft} style={styles.intro}>Elige la prenda que más se parezca a la tuya y luego su color.</AppText>
       <View>
         <FlatList
           horizontal
@@ -65,6 +64,7 @@ export default function NewGarmentScreen() {
 
       <FlatList
         data={items}
+        showsVerticalScrollIndicator={false}
         keyExtractor={(item) => item.key}
         numColumns={2}
         columnWrapperStyle={styles.rowGap}
@@ -79,7 +79,7 @@ export default function NewGarmentScreen() {
             }}
             style={({ pressed }) => [styles.basicCard, { opacity: pressed ? 0.7 : 1 }]}
           >
-            <View style={[styles.basicArt, { backgroundColor: colors.reelTop, borderRadius: radii.md }]}>
+            <View style={[styles.basicArt, { backgroundColor: reelTint[slot], borderRadius: radii.md }]}>
               <GarmentSilhouette
                 silhouette={item.shape}
                 colorHex={item.colorHex}
@@ -94,14 +94,10 @@ export default function NewGarmentScreen() {
         )}
       />
 
-      <AppText variant="micro" color={colors.inkSoft} style={{ textAlign: 'center', paddingVertical: 8 }}>
-        Subir fotos de tu ropa real llegará en una próxima actualización.
-      </AppText>
-
       <Sheet visible={openBasic !== null} onClose={() => setOpenKey(null)} title={openBasic?.name}>
         {openBasic ? (
           <View style={{ gap: spacing.four }}>
-            <View style={[styles.detailArt, { backgroundColor: colors.reelTop, borderRadius: radii.card }]}>
+            <View style={[styles.detailArt, { backgroundColor: reelTint[slot], borderRadius: radii.card }]}>
               <GarmentSilhouette
                 silhouette={openBasic.shape}
                 colorHex={colorHex}
@@ -153,18 +149,29 @@ export default function NewGarmentScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
     paddingHorizontal: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 12,
-    paddingBottom: 20,
+    gap: 8,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
-  eyebrow: {
-    letterSpacing: 1.2,
-    paddingBottom: 10,
+  backButton: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+  },
+  intro: {
+    paddingBottom: 18,
   },
   chips: {
     gap: 8,

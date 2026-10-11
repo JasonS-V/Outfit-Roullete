@@ -4,7 +4,7 @@
  * acciones secundarias y el botón GIRAR con su coreografía escalonada.
  */
 
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,12 +14,8 @@ import { AppText } from '@/components/ui/AppText';
 import { Chip } from '@/components/ui/Chip';
 import {
   CheckIcon,
-  CoffeeIcon,
   DottedBoxIcon,
-  DumbbellIcon,
-  GraduationCapIcon,
   LockIcon,
-  MoonIcon,
   PlusIcon,
   ShareIcon,
   SlotMachineIcon,
@@ -93,7 +89,7 @@ function ActionButton({
       <View style={styles.actionDisc}>
         {icon}
       </View>
-      <AppText variant="micro" color={disabled ? colors.inkSoft : colors.ink}>
+      <AppText variant="micro" color={disabled ? colors.inkSoft : colors.ink} style={styles.actionLabel}>
         {label}
       </AppText>
     </Pressable>
@@ -109,6 +105,17 @@ export default function RouletteScreen() {
   const [settled, setSettled] = useState(0);
   const [weatherOpen, setWeatherOpen] = useState(false);
   const expectedRef = useRef(0);
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollAfterSpinRef = useRef(false);
+  const handledScrollRef = useRef<string | undefined>(undefined);
+  const { scrollToActions } = useLocalSearchParams<{ scrollToActions?: string }>();
+
+  useFocusEffect(useCallback(() => {
+    if (!scrollToActions || handledScrollRef.current === scrollToActions) return;
+    handledScrollRef.current = scrollToActions;
+    const frame = requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+    return () => cancelAnimationFrame(frame);
+  }, [scrollToActions]));
 
   const mode = modeForTemperature(app.temperatureForEngine, app.settings.personalOffsetC);
   const config = reelConfigFor(mode, app.settings.layerEnabled);
@@ -181,6 +188,10 @@ export default function RouletteScreen() {
       setSpinning(false);
       hapticSuccess();
       playChime();
+      if (scrollAfterSpinRef.current) {
+        scrollAfterSpinRef.current = false;
+        requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+      }
     }
   }, [spinning, settled]);
 
@@ -225,6 +236,7 @@ export default function RouletteScreen() {
       return !locksNow[s];
     }).length;
     expectedRef.current = expected;
+    scrollAfterSpinRef.current = true;
     setSettled(0);
     setSpinning(true);
     setSpinId((id) => id + 1);
@@ -289,92 +301,77 @@ export default function RouletteScreen() {
           : mode === 'cold'
             ? 'Hace fresco: capa activada'
             : 'Frío de hoy: capa obligatoria'
-      : 'Sin clima: giros con 20° por defecto';
+      : 'Sin clima: usaremos una temperatura templada';
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top']}>
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <AppText variant="micro" style={styles.eyebrow}>OR  /  OUTFIT ROULETTE</AppText>
-          <WeatherChip onPress={() => setWeatherOpen(true)} />
+      <ScrollView ref={scrollRef} style={styles.reelsScroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <AppText variant="micro" style={styles.eyebrow}>OUTFIT ROULETTE</AppText>
+            <WeatherChip onPress={() => setWeatherOpen(true)} />
+          </View>
+          <AppText variant="title" style={styles.headline}>¿Qué te pones hoy?</AppText>
+          <AppText variant="body" color={colors.inkSoft} style={styles.weatherHint}>
+            {app.settings.chaosMode ? 'Modo caos: sin reglas de color ni formalidad' : weatherHint}
+          </AppText>
         </View>
-        <AppText variant="title" style={styles.headline}>Tu look de hoy.</AppText>
-        <AppText variant="micro" color={colors.inkSoft} numberOfLines={1} style={styles.weatherHint}>
-          {app.settings.chaosMode ? 'Modo caos: sin reglas de color ni formalidad' : weatherHint}
-        </AppText>
-      </View>
 
-      <AppText variant="micro" color={colors.inkSoft} style={styles.sectionLabel}>
-        01  /  ELIGE UNA OCASIÓN
-      </AppText>
-      <View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+        <AppText variant="label" style={styles.sectionLabel}>
+          ¿Cuál es tu plan?
+        </AppText>
+        <View style={styles.chips}>
           {OCCASION_ORDER.map((occasion) => {
             const isSelected = app.occasion === occasion;
-            const iconColor = isSelected ? colors.bg : colors.inkSoft;
-            let iconNode: React.ReactNode = null;
-            if (occasion === 'classes') iconNode = <GraduationCapIcon size={16} color={iconColor} />;
-            else if (occasion === 'date') iconNode = <CoffeeIcon size={16} color={iconColor} />;
-            else if (occasion === 'party') iconNode = <MoonIcon size={16} color={iconColor} />;
-            else if (occasion === 'gym') iconNode = <DumbbellIcon size={16} color={iconColor} />;
-
             return (
               <Chip
                 key={occasion}
                 label={OCCASION_LABELS[occasion]}
-                icon={iconNode}
                 selected={isSelected}
                 onPress={() => app.setOccasion(occasion)}
               />
             );
           })}
-        </ScrollView>
-      </View>
-
-      {app.showLockTip && activeGarments.length > 0 ? (
-        <View
-          style={[
-            styles.hintBar,
-            { backgroundColor: colors.surface, borderColor: colors.cardEdge },
-          ]}
-        >
-          <LockIcon color={colors.inkSoft} size={16} />
-          <AppText variant="micro" color={colors.inkSoft} style={{ flex: 1 }}>
-            Toca el candado para fijar una prenda y girar solo el resto
-          </AppText>
         </View>
-      ) : null}
 
-      <View style={styles.sectionHead}>
-        <AppText variant="micro" color={colors.inkSoft} style={styles.sectionLabel}>02  /  TU COMBINACIÓN</AppText>
-        <AppText variant="micro" color={colors.inkSoft}>DESLIZA PARA CAMBIAR</AppText>
-      </View>
-
-      {activeGarments.length === 0 ? (
-        <View style={styles.empty}>
+        {app.showLockTip && activeGarments.length > 0 ? (
           <View
             style={[
-              styles.emptyArt,
-              { borderColor: colors.line, backgroundColor: colors.surface },
+              styles.hintBar,
+              { backgroundColor: colors.surface, borderColor: colors.cardEdge },
             ]}
           >
-            <DottedBoxIcon color={colors.inkSoft} size={44} strokeWidth={1.6} />
+            <LockIcon color={colors.inkSoft} size={16} />
+            <AppText variant="micro" color={colors.inkSoft} style={{ flex: 1 }}>
+              Toca el candado para fijar una prenda y girar solo el resto
+            </AppText>
           </View>
-          <AppText variant="subtitle" style={{ textAlign: 'center' }}>
-            Tu armario está vacío
-          </AppText>
-          <AppText variant="body" color={colors.inkSoft} style={{ textAlign: 'center' }}>
-            Agrega ropa con una foto o elige de los básicos. (Mientras tanto no hay nada que girar.)
-          </AppText>
-          <PrimaryButton
-            label="Añadir prenda"
-            leading={<PlusIcon size={18} color={colors.onChicle} />}
-            onPress={() => router.push('/garment/new')}
-          />
+        ) : null}
+
+        <View style={styles.sectionHead}>
+          <AppText variant="subtitle">Tu combinación</AppText>
+          <AppText variant="micro" color={colors.inkSoft}>Desliza para cambiar</AppText>
         </View>
-      ) : (
-        <ScrollView style={styles.reelsScroll} contentContainerStyle={styles.reels} showsVerticalScrollIndicator={false}>
-          {displaySlots.map((slot) => {
+
+        <View style={styles.reels}>
+          {activeGarments.length === 0 ? (
+            <View style={styles.empty}>
+              <View
+                style={[
+                  styles.emptyArt,
+                  { borderColor: colors.line, backgroundColor: colors.surface },
+                ]}
+              >
+                <DottedBoxIcon color={colors.inkSoft} size={44} strokeWidth={1.6} />
+              </View>
+              <AppText variant="subtitle" style={{ textAlign: 'center' }}>
+                Tu armario está vacío
+              </AppText>
+              <AppText variant="body" color={colors.inkSoft} style={{ textAlign: 'center' }}>
+                Añade algunas prendas para crear tu primer look.
+              </AppText>
+            </View>
+          ) : displaySlots.map((slot) => {
             const isMergedCard = merged && slot === 'top';
             return (
               <RouletteReel
@@ -395,45 +392,43 @@ export default function RouletteScreen() {
               />
             );
           })}
-        </ScrollView>
-      )}
 
-      <View style={[styles.actionsRow, { borderColor: colors.line }]}>
-        <ActionButton
-          icon={<StarIcon color={current && !spinning ? colors.ink : colors.inkSoft} size={22} />}
-          label="Guardar"
-          onPress={handleSave}
-          disabled={!current || spinning}
-        />
-        <ActionButton
-          icon={<CheckIcon color={current && !spinning ? colors.ink : colors.inkSoft} size={22} />}
-          label="Me lo pongo"
-          onPress={handleWear}
-          disabled={!current || spinning}
-        />
-        <ActionButton
-          icon={<UndoIcon color={app.canUndo && !spinning ? colors.ink : colors.inkSoft} size={22} />}
-          label="Deshacer"
-          onPress={app.undo}
-          disabled={!app.canUndo || spinning}
-        />
-        <ActionButton
-          icon={<ShareIcon color={current && !spinning ? colors.ink : colors.inkSoft} size={22} />}
-          label="Compartir"
-          onPress={() => void handleShare()}
-          disabled={!current || spinning}
-        />
-      </View>
+        </View>
+        {current && activeGarments.length > 0 ? <View style={[styles.actionsRow, { borderColor: colors.line }]}>
+          <ActionButton
+            icon={<CheckIcon color={!spinning ? colors.ink : colors.inkSoft} size={22} />}
+            label="Me lo pongo"
+            onPress={handleWear}
+            disabled={spinning}
+          />
+          <ActionButton
+            icon={<StarIcon color={!spinning ? colors.ink : colors.inkSoft} size={22} />}
+            label="Guardar"
+            onPress={handleSave}
+            disabled={spinning}
+          />
+          <ActionButton
+            icon={<UndoIcon color={app.canUndo && !spinning ? colors.ink : colors.inkSoft} size={22} />}
+            label="Deshacer"
+            onPress={app.undo}
+            disabled={!app.canUndo || spinning}
+          />
+          <ActionButton
+            icon={<ShareIcon color={!spinning ? colors.ink : colors.inkSoft} size={22} />}
+            label="Compartir"
+            onPress={() => void handleShare()}
+            disabled={spinning}
+          />
+        </View> : null}
+      </ScrollView>
 
-      <View style={styles.spinWrap}>
+      <View style={[styles.spinDock, { backgroundColor: colors.surfaceRaised, borderTopColor: colors.line }]}>
         <PrimaryButton
-          label={spinning ? 'Girando…' : allLocked ? 'Desbloquea una prenda' : 'Girar mi look  →'}
-          leading={
-            allLocked ? undefined : <SlotMachineIcon color={colors.onChicle} size={24} />
-          }
-          onPress={handleSpin}
-          disabled={spinning || allLocked || activeGarments.length === 0}
-          accessibilityHint="Gira la ruleta y arma un outfit con tu ropa"
+          label={activeGarments.length === 0 ? 'Añadir prendas' : spinning ? 'Girando…' : allLocked ? 'Desbloquea una prenda' : current ? 'Girar otro look' : 'Crear mi look'}
+          leading={activeGarments.length === 0 ? <PlusIcon color={colors.onChicle} size={22} /> : allLocked ? undefined : <SlotMachineIcon color={colors.onChicle} size={22} />}
+          onPress={activeGarments.length === 0 ? () => router.push('/garment/new') : handleSpin}
+          disabled={spinning || (activeGarments.length > 0 && allLocked)}
+          accessibilityHint="Crea una combinación con tu ropa"
         />
       </View>
 
@@ -445,12 +440,14 @@ export default function RouletteScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingHorizontal: 20,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   header: {
     gap: 5,
-    paddingTop: 12,
-    paddingBottom: 20,
+    paddingTop: 14,
+    paddingBottom: 24,
   },
   headerTop: {
     flexDirection: 'row',
@@ -465,34 +462,40 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   headline: {
-    marginTop: 10,
+    marginTop: 18,
   },
   weatherHint: {
-    marginTop: 2,
+    marginTop: 4,
   },
   sectionLabel: {
-    letterSpacing: 1.2,
+    marginBottom: 2,
   },
   sectionHead: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 14,
-    paddingBottom: 4,
+    gap: 4,
+    paddingTop: 22,
+    paddingBottom: 8,
   },
   chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     paddingTop: 10,
-    paddingBottom: 6,
+    paddingBottom: 4,
   },
   reelsScroll: {
     flex: 1,
   },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
   reels: {
     gap: 8,
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingVertical: 4,
+    paddingTop: 4,
   },
   hintBar: {
     flexDirection: 'row',
@@ -505,7 +508,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   empty: {
-    flex: 1,
+    minHeight: 260,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
@@ -526,15 +529,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     marginTop: 8,
-    marginBottom: 10,
     borderTopWidth: 1,
   },
   action: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
-    minWidth: 64,
     minHeight: 48,
+  },
+  actionLabel: {
+    textAlign: 'center',
   },
   actionDisc: {
     width: 32,
@@ -542,7 +547,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  spinWrap: {
-    paddingBottom: 14,
+  spinDock: {
+    borderTopWidth: 1,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 10,
   },
 });

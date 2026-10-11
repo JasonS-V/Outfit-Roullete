@@ -6,7 +6,7 @@
 import { Circle, Path } from 'react-native-svg';
 import type { ShapeFn } from './colors';
 
-const W = 2.8;
+const W = 4;
 const w = 1.6;
 
 interface ElProps {

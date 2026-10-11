@@ -5,11 +5,12 @@
 
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GarmentSilhouette, patternFor } from '@/components/silhouettes';
 import { AppText } from '@/components/ui/AppText';
+import { Chip } from '@/components/ui/Chip';
 import { CheckIcon, ShareIcon, SlotMachineIcon, StarIcon } from '@/components/ui/icons';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Sheet } from '@/components/ui/Sheet';
@@ -35,8 +36,10 @@ function tempDiff(a: number, b: number): number {
 export default function LookbookScreen() {
   const app = useApp();
   const { colors, radii, spacing } = useTheme();
+  const { width } = useWindowDimensions();
   const { showToast } = useToast();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [onlyToday, setOnlyToday] = useState(false);
 
   const looks = useMemo(() => [...app.looks].sort((a, b) => b.createdAt - a.createdAt), [app.looks]);
 
@@ -73,7 +76,7 @@ export default function LookbookScreen() {
     );
   };
 
-  const lookCard = (look: SavedLook, compactCard: boolean) => (
+  const lookCard = (look: SavedLook) => (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Look de ${OCCASION_LABELS[look.occasion]} del ${formatDate(look.createdAt)}`}
@@ -81,20 +84,21 @@ export default function LookbookScreen() {
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: colors.bg,
+          backgroundColor: colors.surfaceRaised,
+          borderColor: colors.line,
           borderRadius: radii.card,
           opacity: pressed ? 0.85 : 1,
-          width: compactCard ? 168 : '48%',
+          width: '48%',
         },
       ]}
     >
       <View style={[styles.collageWrap, { backgroundColor: colors.reelTop, borderRadius: radii.md }]}>
-        {renderCollage(look, compactCard ? 42 : 48)}
+        {renderCollage(look, width >= 600 ? 64 : 34)}
       </View>
       <View style={styles.cardFooter}>
-        <AppText variant="label" numberOfLines={1}>Look guardado</AppText>
+        <AppText variant="label" numberOfLines={1}>{OCCASION_LABELS[look.occasion]}</AppText>
         <AppText variant="micro" color={colors.inkSoft} numberOfLines={1}>
-          {OCCASION_LABELS[look.occasion]} · {formatDate(look.createdAt)}
+          Guardado el {formatDate(look.createdAt)}
         </AppText>
       </View>
     </Pressable>
@@ -102,10 +106,11 @@ export default function LookbookScreen() {
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top']}>
-      <AppText variant="micro" color={colors.inkSoft} style={styles.eyebrow}>TUS FAVORITOS  /  03</AppText>
       <View style={styles.titleRow}>
-        <AppText variant="title" style={styles.title}>Mis looks.</AppText>
-        <AppText variant="micro" color={colors.inkSoft}>{looks.length} guardados</AppText>
+        <View style={styles.titleCopy}>
+          <AppText variant="title">Looks guardados</AppText>
+          <AppText variant="label" color={colors.inkSoft}>{looks.length} {looks.length === 1 ? 'combinación' : 'combinaciones'} que te gustaron</AppText>
+        </View>
       </View>
 
       {looks.length === 0 ? (
@@ -117,31 +122,37 @@ export default function LookbookScreen() {
             Aún no guardas looks
           </AppText>
           <AppText variant="body" color={colors.inkSoft} style={{ textAlign: 'center' }}>
-            Cuando la ruleta te dé un outfit que te encante, toca Guardar y aparecerá aquí.
+            Crea un look en Hoy y toca Guardar para tenerlo siempre a mano.
           </AppText>
-          <PrimaryButton label="Girar ahora" onPress={() => router.push('/')} leading={<SlotMachineIcon color={colors.onChicle} size={22} />} />
+          <PrimaryButton
+            label="Girar ahora"
+            onPress={() => router.navigate({ pathname: '/', params: { scrollToActions: String(Date.now()) } })}
+            leading={<SlotMachineIcon color={colors.onChicle} size={22} />}
+          />
         </View>
       ) : (
         <FlatList
-          data={looks}
+          data={onlyToday && app.weather.status === 'ready' ? todayLooks : looks}
           keyExtractor={(l) => l.id}
           numColumns={2}
           showsVerticalScrollIndicator={false}
           columnWrapperStyle={styles.rowGap}
           contentContainerStyle={styles.grid}
-          ListHeaderComponent={
-            todayLooks.length > 0 ? (
-              <View style={{ gap: 8, marginBottom: 12 }}>
-                <AppText variant="subtitle">Para hoy</AppText>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
-                  {todayLooks.map((look) => (
-                    <View key={look.id}>{lookCard(look, true)}</View>
-                  ))}
-                </ScrollView>
-              </View>
-            ) : null
+          ListHeaderComponent={app.weather.status === 'ready' ? (
+            <View style={styles.filters}>
+              <Chip label="Todos" selected={!onlyToday} onPress={() => setOnlyToday(false)} />
+              <Chip label={`Para hoy · ${todayLooks.length}`} selected={onlyToday} onPress={() => setOnlyToday(true)} />
+            </View>
+          ) : null}
+          ListEmptyComponent={
+            <View style={styles.emptyFilter}>
+              <AppText variant="body" color={colors.inkSoft} style={{ textAlign: 'center' }}>
+                Ningún look guardado coincide con el clima de hoy.
+              </AppText>
+              <PrimaryButton label="Ver todos" variant="ghost" onPress={() => setOnlyToday(false)} />
+            </View>
           }
-          renderItem={({ item }) => lookCard(item, false)}
+          renderItem={({ item }) => lookCard(item)}
         />
       )}
 
@@ -230,20 +241,27 @@ export default function LookbookScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
     paddingHorizontal: 20,
   },
-  eyebrow: {
-    paddingTop: 12,
-    letterSpacing: 1.3,
-  },
   titleRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-  },
-  title: {
-    paddingTop: 10,
+    paddingTop: 18,
     paddingBottom: 18,
+  },
+  titleCopy: {
+    gap: 4,
+  },
+  filters: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 18,
+  },
+  emptyFilter: {
+    alignItems: 'center',
+    gap: 16,
+    paddingTop: 48,
   },
   grid: {
     gap: 20,
@@ -255,9 +273,11 @@ const styles = StyleSheet.create({
   card: {
     alignItems: 'stretch',
     gap: 8,
+    padding: 8,
+    borderWidth: 1,
   },
   collageWrap: {
-    height: 144,
+    height: 132,
     alignItems: 'center',
     justifyContent: 'center',
   },

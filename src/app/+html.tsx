@@ -15,6 +15,7 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <title>Outfit Roulette</title>
         <ScrollViewStyleReset />
+        <style dangerouslySetInnerHTML={{ __html: '*::-webkit-scrollbar{display:none}*{scrollbar-width:none}' }} />
       </head>
       <body>{children}</body>
     </html>

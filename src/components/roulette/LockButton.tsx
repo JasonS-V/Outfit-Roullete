@@ -34,7 +34,6 @@ export function LockButton({ locked, onToggle, disabled }: LockButtonProps) {
       accessibilityLabel={locked ? 'Carrete fijado. Toca para desbloquear' : 'Fijar este carrete'}
       accessibilityState={{ selected: locked, disabled: Boolean(disabled) }}
       disabled={disabled}
-      hitSlop={6}
       onPress={() => {
         hapticLock();
         scale.value = withSequence(

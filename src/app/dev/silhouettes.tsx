@@ -73,6 +73,9 @@ export default function DevSilhouettesScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
     paddingHorizontal: 12,
   },
   cell: {

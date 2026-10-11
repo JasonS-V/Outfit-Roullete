@@ -6,7 +6,7 @@
 import { Circle, Path } from 'react-native-svg';
 import type { ShapeFn } from './colors';
 
-const W = 2.8; // trazo principal
+const W = 4; // el contorno redondea las esquinas sin cambiar la forma
 const w = 1.6; // trazo de detalle
 
 interface ElProps {

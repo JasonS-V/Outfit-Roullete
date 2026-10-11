@@ -103,7 +103,7 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
           ]}
         >
           {scroll ? (
-            <ScrollView bounces={false} keyboardShouldPersistTaps="handled">
+            <ScrollView bounces={false} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               {body}
             </ScrollView>
           ) : (
