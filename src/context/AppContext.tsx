@@ -97,7 +97,8 @@ interface AppContextType {
   isOnepieceLocked: (onepieceId: string) => boolean;
   // Looks
   looks: SavedLook[];
-  saveCurrentLook: () => SavedLook | null;
+  saveCurrentLook: (customName?: string | null) => SavedLook | null;
+  updateLookName: (id: string, name: string) => void;
   deleteLook: (id: string) => void;
   applyLook: (look: SavedLook) => number;
   // Uso diario
@@ -356,14 +357,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Looks ───────────────────────────────────────────────────────────────
 
-  const saveCurrentLook = useCallback((): SavedLook | null => {
+  const saveCurrentLook = useCallback((customName?: string | null): SavedLook | null => {
     const s = stateRef.current;
     if (!s.current) return null;
     const garmentIds = candidateItems(s.current).map((g) => g.id);
     if (garmentIds.length === 0) return null;
+    const trimmed = typeof customName === 'string' ? customName.trim() : null;
     const look: SavedLook = {
       id: makeId('look'),
-      name: null,
+      name: trimmed && trimmed.length > 0 ? trimmed : null,
       occasion: s.occasion,
       garmentIds,
       temperatureAtSave: weather.data?.apparentC ?? null,
@@ -374,6 +376,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     trackDonation('looks');
     return look;
   }, [trackDonation, weather.data]);
+
+  const updateLookName = useCallback((id: string, name: string) => {
+    const trimmed = name.trim();
+    setLooks((prev) => prev.map((l) => (l.id === id ? { ...l, name: trimmed.length > 0 ? trimmed : null } : l)));
+  }, []);
 
   const deleteLook = useCallback((id: string) => {
     setLooks((prev) => prev.filter((l) => l.id !== id));
@@ -622,6 +629,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       isOnepieceLocked,
       looks,
       saveCurrentLook,
+      updateLookName,
       deleteLook,
       applyLook,
       wearLogs,
@@ -668,6 +676,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       isOnepieceLocked,
       looks,
       saveCurrentLook,
+      updateLookName,
       deleteLook,
       applyLook,
       wearLogs,

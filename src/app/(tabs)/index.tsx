@@ -25,6 +25,7 @@ import {
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useToast } from '@/components/ui/Toast';
 import { WeatherChip, WeatherSheet } from '@/components/weather';
+import { SaveLookModal } from '@/components/looks/SaveLookModal';
 import { candidateItems, useApp } from '@/context/AppContext';
 import { translate, useLanguage } from '@/localization';
 import {
@@ -107,6 +108,7 @@ export default function RouletteScreen() {
   const [spinning, setSpinning] = useState(false);
   const [settled, setSettled] = useState(0);
   const [weatherOpen, setWeatherOpen] = useState(false);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
   const expectedRef = useRef(0);
   const scrollRef = useRef<ScrollView>(null);
   const reelsYRef = useRef(0);
@@ -271,15 +273,22 @@ export default function RouletteScreen() {
   );
 
   const handleSave = useCallback(() => {
-    const look = app.saveCurrentLook();
-    if (look) {
-      showToast({
-        text: 'Look guardado en tu Lookbook',
-        actionLabel: 'Deshacer',
-        onAction: () => app.deleteLook(look.id),
-      });
-    }
-  }, [app, showToast]);
+    setSaveModalOpen(true);
+  }, []);
+
+  const handleConfirmSave = useCallback(
+    (lookName: string) => {
+      const look = app.saveCurrentLook(lookName);
+      if (look) {
+        showToast({
+          text: look.name ? `"${look.name}" guardado en tu Lookbook` : 'Look guardado en tu Lookbook',
+          actionLabel: 'Deshacer',
+          onAction: () => app.deleteLook(look.id),
+        });
+      }
+    },
+    [app, showToast],
+  );
 
   const handleWear = useCallback(() => {
     app.registerWear();
@@ -443,6 +452,7 @@ export default function RouletteScreen() {
       </View>
 
       <WeatherSheet visible={weatherOpen} onClose={() => setWeatherOpen(false)} />
+      <SaveLookModal visible={saveModalOpen} onClose={() => setSaveModalOpen(false)} onSave={handleConfirmSave} />
     </SafeAreaView>
   );
 }

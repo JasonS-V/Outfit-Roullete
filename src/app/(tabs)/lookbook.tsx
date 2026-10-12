@@ -14,6 +14,7 @@ import { Chip } from '@/components/ui/Chip';
 import { CheckIcon, ShareIcon, SlotMachineIcon, StarIcon } from '@/components/ui/icons';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Sheet } from '@/components/ui/Sheet';
+import { SaveLookModal } from '@/components/looks/SaveLookModal';
 import { useToast } from '@/components/ui/Toast';
 import { useApp } from '@/context/AppContext';
 import { translate, useLanguage } from '@/localization';
@@ -41,6 +42,7 @@ export default function LookbookScreen() {
   const { width } = useWindowDimensions();
   const { showToast } = useToast();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState(false);
   const [onlyToday, setOnlyToday] = useState(false);
 
   const looks = useMemo(() => [...app.looks].sort((a, b) => b.createdAt - a.createdAt), [app.looks]);
@@ -81,7 +83,7 @@ export default function LookbookScreen() {
   const lookCard = (look: SavedLook) => (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={language === 'en' ? `${translate(OCCASION_LABELS[look.occasion], language)} outfit from ${formatDate(look.createdAt, language)}` : `Look de ${OCCASION_LABELS[look.occasion]} del ${formatDate(look.createdAt, language)}`}
+      accessibilityLabel={look.name?.trim() || (language === 'en' ? `${translate(OCCASION_LABELS[look.occasion], language)} outfit from ${formatDate(look.createdAt, language)}` : `Look de ${OCCASION_LABELS[look.occasion]} del ${formatDate(look.createdAt, language)}`)}
       onPress={() => setOpenId(look.id)}
       style={({ pressed }) => [
         styles.card,
@@ -98,7 +100,9 @@ export default function LookbookScreen() {
         {renderCollage(look, width >= 600 ? 64 : 34)}
       </View>
       <View style={styles.cardFooter}>
-        <AppText variant="label" numberOfLines={1}>{OCCASION_LABELS[look.occasion]}</AppText>
+        <AppText variant="label" numberOfLines={1}>
+          {look.name?.trim() || OCCASION_LABELS[look.occasion]}
+        </AppText>
         <AppText variant="micro" color={colors.inkSoft} numberOfLines={1}>
           {language === 'en' ? 'Saved on' : 'Guardado el'} {formatDate(look.createdAt, language)}
         </AppText>
@@ -158,16 +162,35 @@ export default function LookbookScreen() {
         />
       )}
 
-      <Sheet visible={openLook !== null} onClose={() => setOpenId(null)} title="Look guardado">
+      <Sheet
+        visible={openLook !== null}
+        onClose={() => {
+          setOpenId(null);
+          setEditingName(false);
+        }}
+        title={openLook?.name?.trim() || (language === 'en' ? 'Saved outfit' : 'Look guardado')}
+      >
         {openLook ? (
           <View style={{ gap: spacing.four }}>
             <View style={{ alignItems: 'center' }}>{renderCollage(openLook, 64)}</View>
-            <AppText variant="label" color={colors.inkSoft} style={{ textAlign: 'center' }}>
-              {OCCASION_LABELS[openLook.occasion]}
-              {openLook.temperatureAtSave !== null
-                ? ` · guardado con ${Math.round(openLook.temperatureAtSave)}°C`
-                : ''}
-            </AppText>
+            <View style={{ gap: 2, alignItems: 'center' }}>
+              {openLook.name ? (
+                <AppText variant="subtitle" style={{ textAlign: 'center' }}>
+                  {openLook.name}
+                </AppText>
+              ) : null}
+              <AppText variant="label" color={colors.inkSoft} style={{ textAlign: 'center' }}>
+                {OCCASION_LABELS[openLook.occasion]}
+                {openLook.temperatureAtSave !== null
+                  ? ` · guardado con ${Math.round(openLook.temperatureAtSave)}°C`
+                  : ''}
+              </AppText>
+            </View>
+            <PrimaryButton
+              label={openLook.name ? (language === 'en' ? 'Change name' : 'Cambiar nombre') : (language === 'en' ? 'Name outfit' : 'Poner nombre al look')}
+              variant="ghost"
+              onPress={() => setEditingName(true)}
+            />
             <View style={{ gap: 6 }}>
               {itemsOf(openLook).map((g) => (
                 <View key={g.id} style={styles.itemRow}>
@@ -236,6 +259,18 @@ export default function LookbookScreen() {
           </View>
         ) : null}
       </Sheet>
+      <SaveLookModal
+        visible={editingName && openLook !== null}
+        initialName={openLook?.name ?? ''}
+        isEditing
+        onClose={() => setEditingName(false)}
+        onSave={(newName) => {
+          if (openLook) {
+            app.updateLookName(openLook.id, newName);
+            showToast({ text: language === 'en' ? 'Name updated' : 'Nombre actualizado' });
+          }
+        }}
+      />
     </SafeAreaView>
   );
 }
