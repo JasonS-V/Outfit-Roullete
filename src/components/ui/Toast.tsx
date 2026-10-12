@@ -59,7 +59,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       {toast ? (
         <Animated.View
-          pointerEvents="box-none"
           style={[
             styles.wrap,
             {
@@ -114,6 +113,7 @@ export function useToast(): ToastContextType {
 
 const styles = StyleSheet.create({
   wrap: {
+    pointerEvents: 'box-none',
     position: 'absolute',
     left: 16,
     right: 16,

@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export type ColorScheme = 'light' | 'dark';
 export type ThemeMode = ColorScheme | 'system';
 export type ThemeColor = 'sage' | 'blue' | 'rose' | 'black';
@@ -120,6 +122,10 @@ export const radii = { sm: 8, md: 12, card: 18, sheet: 28, pill: 999 } as const;
 export const touchTarget = { min: 48 } as const;
 
 export const shadows = {
-  floating: { shadowColor: '#24312C', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 4 },
-  sheet: { shadowColor: '#24312C', shadowOpacity: 0.12, shadowRadius: 24, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
+  floating: Platform.OS === 'web'
+    ? { boxShadow: '0px 5px 12px rgba(36, 49, 44, 0.12)' }
+    : { shadowColor: '#24312C', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 4 },
+  sheet: Platform.OS === 'web'
+    ? { boxShadow: '0px -6px 24px rgba(36, 49, 44, 0.12)' }
+    : { shadowColor: '#24312C', shadowOpacity: 0.12, shadowRadius: 24, shadowOffset: { width: 0, height: -6 }, elevation: 12 },
 } as const;

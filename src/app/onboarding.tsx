@@ -245,7 +245,7 @@ export default function OnboardingScreen() {
             </AppText>
           ) : null}
           {showCityPicker ? <CityPicker onPick={(city) => { void app.setCity(city); finish(); }} /> : null}
-          <View style={styles.weatherArtWrap} pointerEvents="none">
+          <View style={styles.weatherArtWrap}>
             <View
               style={[
                 styles.weatherArt,
@@ -360,6 +360,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   weatherArtWrap: {
+    pointerEvents: 'none',
     gap: 10,
     marginTop: 20,
   },

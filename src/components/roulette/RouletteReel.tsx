@@ -278,7 +278,7 @@ export function RouletteReel({
         style={StyleSheet.absoluteFill}
       />
       {/* Filo superior: una línea de luz que asienta la tarjeta sobre el fondo. */}
-      <View pointerEvents="none" style={[styles.sheen, { backgroundColor: colors.sheen }]} />
+      <View style={[styles.sheen, { backgroundColor: colors.sheen }]} />
 
       <GestureDetector gesture={pan}>
         <View
@@ -323,6 +323,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sheen: {
+    pointerEvents: 'none',
     position: 'absolute',
     top: 0,
     left: 0,
