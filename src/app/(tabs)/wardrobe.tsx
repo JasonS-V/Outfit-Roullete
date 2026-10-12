@@ -4,8 +4,9 @@
  */
 
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GarmentSilhouette, patternFor } from '@/components/silhouettes';
@@ -23,7 +24,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { useToast } from '@/components/ui/Toast';
 import { useApp } from '@/context/AppContext';
 import type { Garment, Slot } from '@/engine';
-import { useTheme } from '@/theme';
+import { fontFamily, useTheme } from '@/theme';
 import { confirmDestructive } from '@/utils/confirm';
 
 type SlotFilter = 'all' | Slot;
@@ -52,6 +53,20 @@ export default function WardrobeScreen() {
   const [category, setCategory] = useState<SlotFilter>('all');
   const [query, setQuery] = useState('');
   const [detailId, setDetailId] = useState<string | null>(null);
+  const reducedMotion = useReducedMotion();
+  const addScale = useSharedValue(1);
+  const filterProgress = useSharedValue(1);
+  const addStyle = useAnimatedStyle(() => ({ transform: [{ scale: addScale.value }] }));
+  const filterStyle = useAnimatedStyle(() => ({
+    opacity: filterProgress.value,
+    transform: [{ translateY: (1 - filterProgress.value) * 12 }],
+  }));
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    filterProgress.set(0.55);
+    filterProgress.set(withTiming(1, { duration: 180 }));
+  }, [category, query, filterProgress, reducedMotion]);
 
   const active = useMemo(() => app.garments.filter((g) => !g.isArchived), [app.garments]);
 
@@ -125,14 +140,18 @@ export default function WardrobeScreen() {
               {active.length} {active.length === 1 ? 'prenda' : 'prendas'} para combinar
             </AppText>
           </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Añadir prenda"
-            onPress={() => router.push('/garment/new')}
-            style={({ pressed }) => [styles.addButton, { backgroundColor: colors.chicle, borderRadius: radii.md, opacity: pressed ? 0.8 : 1 }]}
-          >
-            <PlusIcon color={colors.onChicle} size={25} />
-          </Pressable>
+          <Animated.View style={addStyle}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Añadir prenda"
+              onPressIn={() => { if (!reducedMotion) addScale.set(withSpring(0.88)); }}
+              onPressOut={() => { addScale.set(withSpring(1)); }}
+              onPress={() => router.push('/garment/new')}
+              style={({ pressed }) => [styles.addButton, { backgroundColor: colors.chicle, borderRadius: radii.md, opacity: pressed ? 0.8 : 1 }]}
+            >
+              <PlusIcon color={colors.onChicle} size={25} />
+            </Pressable>
+          </Animated.View>
         </View>
         <View
           style={[
@@ -165,6 +184,7 @@ export default function WardrobeScreen() {
         />
       </View>
 
+      <Animated.View style={[styles.results, filterStyle]}>
       {active.length === 0 ? (
         <View style={styles.empty}>
           <View style={[styles.emptyArt, { borderColor: colors.line, backgroundColor: colors.surface }]}>
@@ -207,6 +227,7 @@ export default function WardrobeScreen() {
           renderItem={({ item }) => renderCard(item)}
         />
       )}
+      </Animated.View>
 
       <Sheet visible={detail !== null} onClose={() => setDetailId(null)} title={detail?.name}>
         {detail ? (
@@ -314,7 +335,7 @@ const styles = StyleSheet.create({
   search: {
     flex: 1,
     paddingVertical: 10,
-    fontFamily: 'Figtree_500Medium',
+    fontFamily: fontFamily.medium,
     fontSize: 15,
   },
   chips: {
@@ -324,6 +345,9 @@ const styles = StyleSheet.create({
   grid: {
     gap: 20,
     paddingBottom: 24,
+  },
+  results: {
+    flex: 1,
   },
   rowGap: {
     justifyContent: 'space-between',

@@ -1,12 +1,10 @@
-import { Platform } from 'react-native';
-
 export const fontFamily = {
-  regular: 'Figtree_400Regular',
-  medium: 'Figtree_500Medium',
-  semiBold: 'Figtree_600SemiBold',
-  bold: 'Figtree_700Bold',
-  extraBold: 'Figtree_800ExtraBold',
-  editorial: Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia' }),
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semiBold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
+  extraBold: 'Inter_800ExtraBold',
+  editorial: 'Inter_700Bold',
 } as const;
 
 export const typeScale = {

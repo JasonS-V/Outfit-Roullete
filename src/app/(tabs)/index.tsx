@@ -106,6 +106,7 @@ export default function RouletteScreen() {
   const [weatherOpen, setWeatherOpen] = useState(false);
   const expectedRef = useRef(0);
   const scrollRef = useRef<ScrollView>(null);
+  const reelsYRef = useRef(0);
   const scrollAfterSpinRef = useRef(false);
   const handledScrollRef = useRef<string | undefined>(undefined);
   const { scrollToActions } = useLocalSearchParams<{ scrollToActions?: string }>();
@@ -240,6 +241,7 @@ export default function RouletteScreen() {
     setSettled(0);
     setSpinning(true);
     setSpinId((id) => id + 1);
+    requestAnimationFrame(() => scrollRef.current?.scrollTo({ y: Math.max(0, reelsYRef.current - 12), animated: true }));
   }, [app, config.showLayer, dismissTip, mode, showToast, spinning]);
 
   const handleToggleLock = useCallback(
@@ -355,7 +357,7 @@ export default function RouletteScreen() {
           <AppText variant="micro" color={colors.inkSoft}>Desliza para cambiar</AppText>
         </View>
 
-        <View style={styles.reels}>
+        <View style={styles.reels} onLayout={(event) => { reelsYRef.current = event.nativeEvent.layout.y; }}>
           {activeGarments.length === 0 ? (
             <View style={styles.empty}>
               <View
@@ -396,7 +398,7 @@ export default function RouletteScreen() {
           })}
 
         </View>
-        {current && activeGarments.length > 0 ? <View style={[styles.actionsRow, { borderColor: colors.line }]}>
+        {current && activeGarments.length > 0 && !spinning ? <View style={[styles.actionsRow, { borderColor: colors.line }]}>
           <ActionButton
             icon={<CheckIcon color={!spinning ? colors.ink : colors.inkSoft} size={22} />}
             label="Me lo pongo"

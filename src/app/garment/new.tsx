@@ -4,8 +4,9 @@
  */
 
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GarmentSilhouette, patternFor } from '@/components/silhouettes';
@@ -35,6 +36,18 @@ export default function NewGarmentScreen() {
   const [slot, setSlot] = useState<Slot>('top');
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [colorHex, setColorHex] = useState('#1A1A1A');
+  const reducedMotion = useReducedMotion();
+  const filterProgress = useSharedValue(1);
+  const filterStyle = useAnimatedStyle(() => ({
+    opacity: filterProgress.value,
+    transform: [{ translateY: (1 - filterProgress.value) * 12 }],
+  }));
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    filterProgress.set(0.55);
+    filterProgress.set(withTiming(1, { duration: 180 }));
+  }, [slot, filterProgress, reducedMotion]);
 
   const items = useMemo(() => ALL_BASICS.filter((b) => b.slot === slot), [slot]);
   const openBasic = openKey ? BASIC_BY_KEY[openKey] : null;
@@ -62,8 +75,9 @@ export default function NewGarmentScreen() {
         />
       </View>
 
-      <FlatList
+      <Animated.FlatList
         data={items}
+        style={filterStyle}
         showsVerticalScrollIndicator={false}
         keyExtractor={(item) => item.key}
         numColumns={2}

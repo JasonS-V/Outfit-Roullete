@@ -1,5 +1,5 @@
 /**
- * AppText · tipografía unificada (Figtree, escala §15.2).
+ * AppText · tipografía unificada (Inter, escala §15.2).
  */
 
 import { Text, type TextProps } from 'react-native';

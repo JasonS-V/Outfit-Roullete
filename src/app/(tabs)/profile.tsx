@@ -4,8 +4,9 @@
  */
 
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown, FadeOutUp, interpolateColor, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/AppText';
@@ -91,6 +92,18 @@ function SwitchRow({
   divider?: boolean;
 }) {
   const { colors, spacing } = useTheme();
+  const reducedMotion = useReducedMotion();
+  const progress = useSharedValue(value ? 1 : 0);
+  useEffect(() => {
+    progress.set(withTiming(value ? 1 : 0, { duration: reducedMotion ? 0 : 180 }));
+  }, [progress, reducedMotion, value]);
+  const trackStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(progress.value, [0, 1], [colors.line, colors.candado]),
+  }));
+  const thumbStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(progress.value, [0, 1], [colors.bg, colors.onCandado]),
+    transform: [{ translateX: progress.value * 20 }],
+  }));
   return (
     <>
       {divider ? <RowDivider /> : null}
@@ -111,9 +124,9 @@ function SwitchRow({
           onPress={() => onChange(!value)}
           style={styles.switchTouch}
         >
-          <View style={[styles.switchTrack, { backgroundColor: value ? colors.candado : colors.line }]}>
-            <View style={[styles.switchThumb, { backgroundColor: value ? colors.onCandado : colors.bg, marginLeft: value ? 23 : 3 }]} />
-          </View>
+          <Animated.View style={[styles.switchTrack, trackStyle]}>
+            <Animated.View style={[styles.switchThumb, thumbStyle]} />
+          </Animated.View>
         </Pressable>
       </View>
     </>
@@ -143,6 +156,12 @@ function AppearanceDropdown<T extends string>({
 }) {
   const { colors, radii, spacing } = useTheme();
   const selected = options.find((option) => option.key === value)!;
+  const reducedMotion = useReducedMotion();
+  const rotation = useSharedValue(expanded ? -90 : 90);
+  useEffect(() => {
+    rotation.set(withTiming(expanded ? -90 : 90, { duration: reducedMotion ? 0 : 180 }));
+  }, [expanded, reducedMotion, rotation]);
+  const arrowStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${rotation.value}deg` }] }));
 
   return (
     <View>
@@ -151,17 +170,17 @@ function AppearanceDropdown<T extends string>({
         accessibilityLabel={`${label}: ${selected.label}`}
         accessibilityState={{ expanded }}
         onPress={onToggle}
-        style={[styles.appearanceTrigger, { borderColor: colors.line, borderRadius: radii.md, paddingHorizontal: spacing.four }]}
+        style={({ pressed }) => [styles.appearanceTrigger, { borderColor: colors.line, borderRadius: radii.md, paddingHorizontal: spacing.four, opacity: pressed ? 0.7 : 1 }]}
       >
         <AppText variant="subtitle" style={{ flex: 1 }}>{label}</AppText>
         {selected.swatch ? <View style={[styles.themeSwatch, { backgroundColor: selected.swatch, borderColor: colors.line }]} /> : null}
         <AppText variant="body" color={colors.inkSoft}>{selected.label}</AppText>
-        <View style={{ transform: [{ rotate: expanded ? '-90deg' : '90deg' }] }}>
+        <Animated.View style={arrowStyle}>
           <ChevronRightIcon size={18} color={colors.inkSoft} />
-        </View>
+        </Animated.View>
       </Pressable>
       {expanded ? (
-        <View style={{ paddingTop: spacing.one }}>
+        <Animated.View entering={reducedMotion ? undefined : FadeInDown.duration(180)} exiting={reducedMotion ? undefined : FadeOutUp.duration(130)} style={{ paddingTop: spacing.one }}>
           {options.map((option) => (
             <Pressable
               key={option.key}
@@ -169,14 +188,14 @@ function AppearanceDropdown<T extends string>({
               accessibilityLabel={`${label}: ${option.label}`}
               accessibilityState={{ selected: value === option.key }}
               onPress={() => onSelect(option.key)}
-              style={[styles.appearanceOption, { borderBottomColor: colors.lineSoft, paddingHorizontal: spacing.four }]}
+              style={({ pressed }) => [styles.appearanceOption, { borderBottomColor: colors.lineSoft, paddingHorizontal: spacing.four, opacity: pressed ? 0.7 : 1 }]}
             >
               {option.swatch ? <View style={[styles.themeSwatch, { backgroundColor: option.swatch, borderColor: colors.line }]} /> : null}
               <AppText variant="body" style={{ flex: 1 }}>{option.label}</AppText>
               {value === option.key ? <AppText variant="label" color={colors.inkSoft}>✓</AppText> : null}
             </Pressable>
           ))}
-        </View>
+        </Animated.View>
       ) : null}
     </View>
   );
@@ -461,6 +480,7 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     justifyContent: 'center',
+    paddingLeft: 3,
   },
   switchThumb: {
     width: 22,

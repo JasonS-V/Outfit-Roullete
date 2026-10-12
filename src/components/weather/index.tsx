@@ -8,7 +8,7 @@ import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react
 
 import { useApp } from '@/context/AppContext';
 import { searchCity, WeatherError, type CityResult } from '@/services/weather';
-import { useTheme } from '@/theme';
+import { fontFamily, useTheme } from '@/theme';
 import { AppText } from '@/components/ui/AppText';
 import { CloudSunIcon, SnowIcon, SunIcon } from '@/components/ui/icons';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 48,
     borderWidth: 1,
-    fontFamily: 'Figtree_500Medium',
+    fontFamily: fontFamily.medium,
     fontSize: 15,
   },
   searchRow: {
