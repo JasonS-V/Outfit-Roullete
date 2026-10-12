@@ -202,6 +202,9 @@ export function WeatherSheet({
           disabled={weather.status === 'loading'}
         />
         <AppText variant="micro" color={colors.inkSoft} style={{ textAlign: 'center' }}>
+          Solo usamos tu ubicación aproximada en primer plano para consultar el clima. No se guarda ni se comparte.
+        </AppText>
+        <AppText variant="micro" color={colors.inkSoft} style={{ textAlign: 'center' }}>
           o elige tu ciudad manualmente
         </AppText>
         <CityPicker

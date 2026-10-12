@@ -3,8 +3,6 @@
  * estadísticas reales del ropero y borrado total de datos.
  */
 
-import * as Linking from 'expo-linking';
-import { KO_FI_URL } from '@/services/donation';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -17,7 +15,9 @@ import { translate, useLanguage, type Language } from '@/localization';
 import { ChevronRightIcon } from '@/components/ui/icons';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useToast } from '@/components/ui/Toast';
+import * as Linking from 'expo-linking';
 import { WeatherSheet } from '@/components/weather';
+import { KO_FI_URL } from '@/services/donation';
 import { useApp } from '@/context/AppContext';
 import { themeColorOptions, useTheme, type ThemeMode } from '@/theme';
 import { parseBackup } from '@/services/backup';
