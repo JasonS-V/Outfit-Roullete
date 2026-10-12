@@ -1,6 +1,6 @@
 /**
- * Onboarding de 90 segundos (§9).
- * 4 pasos en una sola ruta: bienvenida, estilo, básicos y clima.
+ * Onboarding guiado (§9).
+ * Bienvenida y 4 pasos en una sola ruta: personalización, estilo, básicos y clima.
  * El "primer giro guiado" es la propia pantalla de la ruleta.
  */
 
@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GarmentSilhouette } from '@/components/silhouettes';
 import { AppText } from '@/components/ui/AppText';
+import { Chip } from '@/components/ui/Chip';
 import {
   CheckIcon,
   ChevronRightIcon,
@@ -22,18 +23,25 @@ import {
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { CityPicker } from '@/components/weather';
 import { useApp } from '@/context/AppContext';
+import { translate, useLanguage } from '@/localization';
 import type { Audience } from '@/data/catalog';
 import { STARTER_RECOMMENDED_COUNT, starterRows, starterSetFor } from '@/data/starter';
-import { useTheme } from '@/theme';
+import { themeColorOptions, useTheme, type ThemeMode } from '@/theme';
 
 const AUDIENCE_OPTIONS: { key: Audience; label: string; note: string }[] = [
   { key: 'fem', label: 'Ropa femenina', note: 'Vestidos, faldas y básicos femeninos primero' },
   { key: 'masc', label: 'Ropa masculina', note: 'Los básicos de siempre primero' },
   { key: 'uni', label: 'Ambas / Neutro', note: 'Una biblioteca sin etiquetas' },
 ];
+const MODE_OPTIONS: { key: ThemeMode; label: string }[] = [
+  { key: 'system', label: 'Sistema' },
+  { key: 'light', label: 'Claro' },
+  { key: 'dark', label: 'Oscuro' },
+];
 
 export default function OnboardingScreen() {
   const app = useApp();
+  const language = useLanguage();
   const { colors, radii, spacing, reelGradient } = useTheme();
   const [step, setStep] = useState(0);
   const [audience, setLocalAudience] = useState<Audience>('uni');
@@ -65,7 +73,7 @@ export default function OnboardingScreen() {
   const pickAudience = (value: Audience) => {
     setLocalAudience(value);
     setSelected(new Set(starterSetFor(value).checked));
-    setStep(2);
+    setStep(3);
   };
 
   const finish = () => {
@@ -80,7 +88,7 @@ export default function OnboardingScreen() {
         {step > 0 ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Volver al paso anterior"
+            accessibilityLabel={app.settings.language === 'en' ? 'Back to previous step' : 'Volver al paso anterior'}
             onPress={() => setStep(step - 1)}
             style={styles.backButton}
           >
@@ -88,7 +96,7 @@ export default function OnboardingScreen() {
           </Pressable>
         ) : null}
         <AppText variant="micro" color={colors.ink} style={styles.brand}>
-          {step === 0 ? 'OUTFIT ROULETTE' : `PASO ${step} DE 3`}
+          {step === 0 ? 'OUTFIT ROULETTE' : app.settings.language === 'en' ? `STEP ${step} OF 4` : `PASO ${step} DE 4`}
         </AppText>
       </View>
 
@@ -99,7 +107,7 @@ export default function OnboardingScreen() {
               source={require('../../assets/images/editorial-blazer.jpg')}
               resizeMode="cover"
               style={styles.image}
-              accessibilityLabel="Blazer lavanda en un estudio editorial"
+              accessibilityLabel={translate('Blazer lavanda en un estudio editorial', language)}
             />
             <View style={[styles.imageTag, { backgroundColor: colors.bg }]}>
               <AppText variant="micro" style={styles.imageTagText}>EL EDITORIAL  /  01</AppText>
@@ -115,6 +123,9 @@ export default function OnboardingScreen() {
             <AppText variant="body" color={colors.inkSoft}>
               Looks para cada día, creados con la ropa que ya tienes.
             </AppText>
+            <AppText variant="body" color={colors.inkSoft}>
+              Personaliza el tema, el color y el idioma antes de empezar.
+            </AppText>
           </View>
           <PrimaryButton
             label="Empezar"
@@ -124,6 +135,43 @@ export default function OnboardingScreen() {
       ) : null}
 
       {step === 1 ? (
+        <ScrollView contentContainerStyle={styles.bodyScroll} showsVerticalScrollIndicator={false}>
+          <AppText variant="title">Hazla tuya</AppText>
+          <AppText variant="body" color={colors.inkSoft}>
+            Elige cómo quieres ver la app. Puedes cambiarlo después en Ajustes.
+          </AppText>
+          <View style={{ gap: spacing.three, marginTop: spacing.four }}>
+            <AppText variant="subtitle">Idioma</AppText>
+            <View style={styles.choiceRow}>
+              <Chip label="Español" selected={app.settings.language === 'es'} onPress={() => app.updateSettings({ language: 'es' })} />
+              <Chip label="English" selected={app.settings.language === 'en'} onPress={() => app.updateSettings({ language: 'en' })} />
+            </View>
+            <AppText variant="subtitle">Tema</AppText>
+            <View style={styles.choiceRow}>
+              {MODE_OPTIONS.map((option) => (
+                <Chip key={option.key} label={option.label} selected={app.settings.themeMode === option.key} onPress={() => app.updateSettings({ themeMode: option.key })} />
+              ))}
+            </View>
+            <AppText variant="subtitle">Color</AppText>
+            <View style={styles.choiceRow}>
+              {themeColorOptions.map((option) => (
+                <Chip
+                  key={option.key}
+                  label={option.label}
+                  selected={app.settings.themeColor === option.key}
+                  onPress={() => app.updateSettings({ themeColor: option.key })}
+                  icon={<View style={[styles.colorDot, { backgroundColor: option.swatch }]} />}
+                />
+              ))}
+            </View>
+          </View>
+          <View style={{ marginTop: 'auto', paddingTop: spacing.four }}>
+            <PrimaryButton label="Continuar" onPress={() => setStep(2)} />
+          </View>
+        </ScrollView>
+      ) : null}
+
+      {step === 2 ? (
         <View style={styles.body}>
           <AppText variant="title">¿Qué tipo de prendas prefieres ver primero?</AppText>
           <View style={{ gap: spacing.three, marginTop: spacing.four }}>
@@ -131,7 +179,7 @@ export default function OnboardingScreen() {
               <Pressable
                 key={option.key}
                 accessibilityRole="button"
-                accessibilityLabel={`${option.label}. ${option.note}`}
+                accessibilityLabel={`${translate(option.label, language)}. ${translate(option.note, language)}`}
                 onPress={() => pickAudience(option.key)}
                 style={({ pressed }) => [
                   styles.option,
@@ -158,7 +206,7 @@ export default function OnboardingScreen() {
         </View>
       ) : null}
 
-      {step === 2 ? (
+      {step === 3 ? (
         <View style={styles.body}>
           <AppText variant="title">Arma tu armario inicial</AppText>
           <AppText variant="body" color={colors.inkSoft}>
@@ -221,14 +269,14 @@ export default function OnboardingScreen() {
           </ScrollView>
           <PrimaryButton
             label={`¡Listo, a girar! (${chosenCount})`}
-            onPress={() => setStep(3)}
+            onPress={() => setStep(4)}
             disabled={!readyToSpin}
             accessibilityHint="Necesitas al menos una prenda por categoría"
           />
         </View>
       ) : null}
 
-      {step === 3 ? (
+      {step === 4 ? (
         <ScrollView contentContainerStyle={styles.bodyScroll} showsVerticalScrollIndicator={false}>
           <AppText variant="title">¿Adaptamos tus outfits al clima de hoy?</AppText>
           <AppText variant="body" color={colors.inkSoft}>
@@ -377,6 +425,18 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     gap: 10,
+  },
+  choiceRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  colorDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#00000022',
   },
   item: {
     flex: 1,

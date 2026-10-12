@@ -4,6 +4,7 @@
  */
 
 import * as Location from 'expo-location';
+import type { Language } from '@/localization';
 
 export interface WeatherData {
   tempC: number;
@@ -67,8 +68,8 @@ export async function fetchWeatherAt(lat: number, lon: number, city: string): Pr
   return data;
 }
 
-export async function searchCity(query: string): Promise<CityResult[]> {
-  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=es&format=json`;
+export async function searchCity(query: string, language: Language = 'es'): Promise<CityResult[]> {
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=${language}&format=json`;
   const json = (await fetchJson(url)) as {
     results?: {
       name: string;

@@ -7,6 +7,7 @@
 import { Pressable, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import Svg, { Path, Rect } from 'react-native-svg';
+import { translate, useLanguage } from '@/localization';
 
 import { hapticLock } from '@/services/haptics';
 import { useTheme } from '@/theme';
@@ -21,6 +22,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function LockButton({ locked, onToggle, disabled }: LockButtonProps) {
   const { colors } = useTheme();
+  const language = useLanguage();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -31,7 +33,7 @@ export function LockButton({ locked, onToggle, disabled }: LockButtonProps) {
   return (
     <AnimatedPressable
       accessibilityRole="button"
-      accessibilityLabel={locked ? 'Carrete fijado. Toca para desbloquear' : 'Fijar este carrete'}
+      accessibilityLabel={translate(locked ? 'Carrete fijado. Toca para desbloquear' : 'Fijar este carrete', language)}
       accessibilityState={{ selected: locked, disabled: Boolean(disabled) }}
       disabled={disabled}
       onPress={() => {

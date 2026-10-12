@@ -24,6 +24,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { useToast } from '@/components/ui/Toast';
 import { useApp } from '@/context/AppContext';
 import type { Garment, Slot } from '@/engine';
+import { translate, useLanguage } from '@/localization';
 import { fontFamily, useTheme } from '@/theme';
 import { confirmDestructive } from '@/utils/confirm';
 
@@ -48,6 +49,7 @@ const SLOT_NAMES: Record<Slot, string> = {
 
 export default function WardrobeScreen() {
   const app = useApp();
+  const language = useLanguage();
   const { colors, reelTint, radii, spacing } = useTheme();
   const { showToast } = useToast();
   const [category, setCategory] = useState<SlotFilter>('all');
@@ -74,16 +76,16 @@ export default function WardrobeScreen() {
     const q = query.trim().toLowerCase();
     return active
       .filter((g) => (category === 'all' ? true : g.slot === category))
-      .filter((g) => (q.length === 0 ? true : `${g.name} ${g.colorName}`.toLowerCase().includes(q)))
+      .filter((g) => (q.length === 0 ? true : `${g.name} ${g.colorName} ${translate(g.name, language)} ${translate(g.colorName, language)}`.toLowerCase().includes(q)))
       .sort((a, b) => b.createdAt - a.createdAt);
-  }, [active, category, query]);
+  }, [active, category, query, language]);
 
   const detail = detailId ? active.find((g) => g.id === detailId) ?? null : null;
 
   const renderCard = (garment: Garment) => (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${garment.name}, ${garment.colorName}`}
+      accessibilityLabel={`${translate(garment.name, language)}, ${translate(garment.colorName, language)}`}
       onPress={() => setDetailId(garment.id)}
       style={({ pressed }) => [
         styles.card,
@@ -143,7 +145,7 @@ export default function WardrobeScreen() {
           <Animated.View style={addStyle}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Añadir prenda"
+              accessibilityLabel={translate('Añadir prenda', language)}
               onPressIn={() => { if (!reducedMotion) addScale.set(withSpring(0.88)); }}
               onPressOut={() => { addScale.set(withSpring(1)); }}
               onPress={() => router.push('/garment/new')}
@@ -161,10 +163,10 @@ export default function WardrobeScreen() {
         >
           <SearchIcon color={colors.inkSoft} size={18} />
           <TextInput
-            accessibilityLabel="Buscar en el armario"
+            accessibilityLabel={translate('Buscar en el armario', language)}
             value={query}
             onChangeText={setQuery}
-            placeholder="Buscar por prenda o color"
+            placeholder={translate('Buscar por prenda o color', language)}
             placeholderTextColor={colors.inkSoft}
             style={[styles.search, { color: colors.ink }]}
           />
@@ -280,6 +282,8 @@ export default function WardrobeScreen() {
                 const ok = await confirmDestructive(
                   'Eliminar prenda',
                   `Se quitará "${detail.name}" de tu armario. Los looks guardados que la usen se conservan sin ella.`,
+                  'Eliminar',
+                  language,
                 );
                 if (ok) {
                   app.removeGarment(detail.id);

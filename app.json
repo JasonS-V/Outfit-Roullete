@@ -11,7 +11,8 @@
       "icon": "./assets/images/brand-icon.png",
       "bundleIdentifier": "com.aizendev1.outfitroulette",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleAllowMixedLocalizations": true
       }
     },
     "android": {
@@ -34,6 +35,10 @@
     "web": {
       "output": "static",
       "favicon": "./assets/images/brand-favicon.png"
+    },
+    "locales": {
+      "es": "./locales/es.json",
+      "en": "./locales/en.json"
     },
     "plugins": [
       "expo-router",

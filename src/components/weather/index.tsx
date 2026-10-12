@@ -7,6 +7,7 @@ import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { useApp } from '@/context/AppContext';
+import { translate, useLanguage } from '@/localization';
 import { searchCity, WeatherError, type CityResult } from '@/services/weather';
 import { fontFamily, useTheme } from '@/theme';
 import { AppText } from '@/components/ui/AppText';
@@ -16,6 +17,7 @@ import { Sheet } from '@/components/ui/Sheet';
 
 export function WeatherChip({ onPress }: { onPress: () => void }) {
   const { weather } = useApp();
+  const language = useLanguage();
   const { colors, radii, spacing } = useTheme();
 
   let label = 'Clima';
@@ -41,7 +43,7 @@ export function WeatherChip({ onPress }: { onPress: () => void }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Clima: ${label}. Toca para configurar`}
+      accessibilityLabel={language === 'en' ? `Weather: ${translate(label, language)}. Tap to configure` : `Clima: ${label}. Toca para configurar`}
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
@@ -74,6 +76,7 @@ interface CityPickerProps {
 
 export function CityPicker({ onPick }: CityPickerProps) {
   const { colors, radii, spacing } = useTheme();
+  const language = useLanguage();
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<'idle' | 'searching' | 'done' | 'error'>('idle');
   const [results, setResults] = useState<CityResult[]>([]);
@@ -88,7 +91,7 @@ export function CityPicker({ onPick }: CityPickerProps) {
     }
     setStatus('searching');
     try {
-      const found = await searchCity(trimmed);
+      const found = await searchCity(trimmed, language);
       setResults(found);
       setStatus('done');
       setErrorText('');
@@ -100,17 +103,17 @@ export function CityPicker({ onPick }: CityPickerProps) {
           : 'No pudimos buscar la ciudad. Revisa tu conexión.',
       );
     }
-  }, [query]);
+  }, [query, language]);
 
   return (
     <View style={{ gap: spacing.three }}>
       <View style={styles.searchRow}>
         <TextInput
-          accessibilityLabel="Buscar ciudad"
+          accessibilityLabel={translate('Buscar ciudad', language)}
           value={query}
           onChangeText={setQuery}
           onSubmitEditing={runSearch}
-          placeholder="Escribe tu ciudad (ej. Lima)"
+          placeholder={translate('Escribe tu ciudad (ej. Lima)', language)}
           placeholderTextColor={colors.inkSoft}
           returnKeyType="search"
           style={[

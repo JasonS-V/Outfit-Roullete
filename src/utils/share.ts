@@ -7,14 +7,17 @@
 import { Platform, Share } from 'react-native';
 
 import type { Garment } from '@/engine';
+import { translate, type Language } from '@/localization';
 
-export function outfitShareText(items: Garment[]): string {
-  const parts = items.map((g) => `${g.name} (${g.colorName.toLowerCase()})`);
-  return `Hoy la ruleta eligió: ${parts.join(' + ')}. ¿Te atreves a girar? #OutfitRoulette`;
+export function outfitShareText(items: Garment[], language: Language = 'es'): string {
+  const parts = items.map((g) => `${translate(g.name, language)} (${translate(g.colorName, language).toLowerCase()})`);
+  return language === 'en'
+    ? `Today the roulette picked: ${parts.join(' + ')}. Ready to spin? #OutfitRoulette`
+    : `Hoy la ruleta eligió: ${parts.join(' + ')}. ¿Te atreves a girar? #OutfitRoulette`;
 }
 
-export async function shareOutfit(items: Garment[]): Promise<'shared' | 'copied' | 'failed'> {
-  const message = outfitShareText(items);
+export async function shareOutfit(items: Garment[], language: Language = 'es'): Promise<'shared' | 'copied' | 'failed'> {
+  const message = outfitShareText(items, language);
   if (Platform.OS === 'web') {
     try {
       const nav = globalThis.navigator as Navigator & {

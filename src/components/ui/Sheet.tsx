@@ -6,6 +6,7 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 import Animated, { interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { fontFamily, useTheme } from '@/theme';
+import { translate, useLanguage } from '@/localization';
 import { shouldCloseSheet } from './sheetGesture';
 
 interface SheetProps {
@@ -20,6 +21,7 @@ interface SheetProps {
 
 export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85, scroll = true }: SheetProps) {
   const { colors, radii, spacing, shadows } = useTheme();
+  const language = useLanguage();
   const { height } = useWindowDimensions();
   const [mounted, setMounted] = useState(visible);
   const position = useSharedValue(height);
@@ -70,7 +72,7 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
     <Modal visible transparent animationType="none" onRequestClose={onClose}>
       <GestureHandlerRootView style={styles.root}>
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }, backdropStyle]} />
-        <Pressable accessibilityRole="button" accessibilityLabel="Cerrar panel" style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Pressable accessibilityRole="button" accessibilityLabel={translate('Cerrar panel', language)} style={StyleSheet.absoluteFill} onPress={onClose} />
         <Animated.View
           style={[
             styles.panel,
@@ -88,8 +90,8 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
             <View style={{ paddingHorizontal: spacing.six, marginBottom: title ? spacing.four : 0 }}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Cerrar panel"
-                accessibilityHint="También puedes deslizar hacia abajo"
+                accessibilityLabel={translate('Cerrar panel', language)}
+                accessibilityHint={translate('También puedes deslizar hacia abajo', language)}
                 onPress={onClose}
                 hitSlop={12}
                 style={{ alignSelf: 'center', paddingVertical: title ? spacing.three : spacing.four }}
@@ -98,7 +100,7 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
               </Pressable>
               {title ? (
                 <Text style={{ fontFamily: fontFamily.editorial, fontSize: 28, lineHeight: 34, color: colors.ink }}>
-                  {title}
+                  {translate(title, language)}
                 </Text>
               ) : null}
             </View>

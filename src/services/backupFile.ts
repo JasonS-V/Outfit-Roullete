@@ -2,8 +2,9 @@ import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
+import { translate, type Language } from '@/localization';
 
-export async function exportBackupFile(json: string): Promise<void> {
+export async function exportBackupFile(json: string, language: Language = 'es'): Promise<void> {
   const name = `outfit-roulette-${new Date().toISOString().slice(0, 10)}.json`;
   if (Platform.OS === 'web') {
     const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
@@ -18,7 +19,7 @@ export async function exportBackupFile(json: string): Promise<void> {
   const file = new File(Paths.cache, name);
   file.create({ overwrite: true });
   file.write(json);
-  await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: 'Guardar respaldo' });
+  await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: translate('Guardar respaldo', language) });
 }
 
 export async function pickBackupFile(): Promise<string | null> {

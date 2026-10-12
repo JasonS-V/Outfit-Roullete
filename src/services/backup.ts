@@ -2,6 +2,7 @@ import type { SpinSettingsState } from '../context/AppContext';
 import type { Audience } from '../data/catalog';
 import type { Garment, Occasion, ReelSlot, SavedLook, Slot, WearLog } from '../engine/types';
 import type { CityResult } from './weather';
+import { EMPTY_DONATION_COUNTS, type DonationCounts } from './donation';
 
 export interface AppBackup {
   version: 1;
@@ -17,6 +18,7 @@ export interface AppBackup {
   settings: SpinSettingsState;
   showLockTip: boolean;
   weatherPlace: CityResult | 'device' | null;
+  donationCounts: DonationCounts;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -61,6 +63,7 @@ function wearLog(value: unknown): value is WearLog {
 function settings(value: unknown): value is SpinSettingsState {
   return isRecord(value) && oneOf(value.themeColor, ['sage', 'blue', 'rose', 'black']) &&
     oneOf(value.themeMode, ['system', 'light', 'dark']) && isBoolean(value.soundOn) &&
+    (value.language === undefined || oneOf(value.language, ['es', 'en'])) &&
     isBoolean(value.hapticsOn) && isNumber(value.personalOffsetC) && [-2, 0, 2].includes(value.personalOffsetC) &&
     isBoolean(value.chaosMode) && isBoolean(value.layerEnabled);
 }
@@ -72,6 +75,15 @@ function place(value: unknown): value is AppBackup['weatherPlace'] {
     (value.country === undefined || isString(value.country)));
 }
 
+type StoredDonationCounts = { spins: number; looks: number; garments?: number; prompted?: boolean };
+
+function donationCounts(value: unknown): value is StoredDonationCounts {
+  return isRecord(value) && ['spins', 'looks'].every((key) =>
+    isNumber(value[key]) && Number.isInteger(value[key]) && value[key] >= 0 && value[key] <= (key === 'spins' ? 10 : 2)) &&
+    (value.garments === undefined || (isNumber(value.garments) && Number.isInteger(value.garments) && value.garments >= 0 && value.garments <= 2)) &&
+    (value.prompted === undefined || isBoolean(value.prompted));
+}
+
 export function parseBackup(json: string): AppBackup {
   const value: unknown = JSON.parse(json);
   if (!isRecord(value) || value.version !== 1 || !isBoolean(value.hasOnboarded) ||
@@ -81,8 +93,17 @@ export function parseBackup(json: string): AppBackup {
     !Array.isArray(value.wearLogs) || !value.wearLogs.every(wearLog) ||
     !stringArray(value.recentComboKeys) || !oneOf(value.occasion, occasions) ||
     !idMap(value.currentIds, slots) || !idMap(value.locks, slots.slice(0, 4)) ||
-    !settings(value.settings) || !isBoolean(value.showLockTip) || !place(value.weatherPlace)) {
+    !settings(value.settings) || !isBoolean(value.showLockTip) || !place(value.weatherPlace) ||
+    (value.donationCounts !== undefined && !donationCounts(value.donationCounts))) {
     throw new Error('El archivo no es un respaldo válido de Outfit Roulette.');
   }
-  return value as unknown as AppBackup;
+  const backup = value as unknown as Omit<AppBackup, 'donationCounts'> & { donationCounts?: StoredDonationCounts };
+  const counts = backup.donationCounts;
+  return {
+    ...backup,
+    settings: { ...backup.settings, language: backup.settings.language ?? 'es' },
+    donationCounts: counts
+      ? { spins: counts.spins, looks: counts.looks, prompted: counts.prompted ?? (counts.spins === 2 || counts.looks === 2 || counts.garments === 2) }
+      : { ...EMPTY_DONATION_COUNTS, looks: Math.min(2, backup.looks.length) },
+  };
 }

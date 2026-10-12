@@ -26,7 +26,9 @@ import type {
 import { setHapticsEnabled } from '@/services/haptics';
 import { setSoundEnabled } from '@/services/sound';
 import { parseBackup, type AppBackup } from '@/services/backup';
+import { advanceDonationCount, EMPTY_DONATION_COUNTS, type DonationMilestone } from '@/services/donation';
 import { ThemePreferencesContext } from '@/theme';
+import { LanguageContext, type Language } from '@/localization';
 import type { ThemeColor, ThemeMode } from '@/theme/tokens';
 import {
   deviceCoordinates,
@@ -37,6 +39,7 @@ import {
 } from '@/services/weather';
 
 export interface SpinSettingsState {
+  language: Language;
   themeColor: ThemeColor;
   themeMode: ThemeMode;
   soundOn: boolean;
@@ -57,6 +60,7 @@ export interface WeatherState {
 const WEATHER_FALLBACK_C = 20;
 const STORAGE_KEY = 'outfit-roulette:state:v1';
 const DEFAULT_SETTINGS: SpinSettingsState = {
+  language: 'es',
   themeColor: 'sage', themeMode: 'system', soundOn: true, hapticsOn: true,
   personalOffsetC: 0, chaosMode: false, layerEnabled: false,
 };
@@ -84,6 +88,7 @@ interface AppContextType {
   toggleLock: (slot: ReelSlot) => void;
   manualPick: (slot: ReelSlot, garmentId: string) => void;
   spinNow: () => SpinResult | null;
+  recordSpin: () => void;
   undo: () => void;
   canUndo: boolean;
   clearLocks: () => void;
@@ -110,6 +115,8 @@ interface AppContextType {
   // Tip de primer giro
   showLockTip: boolean;
   dismissLockTip: () => void;
+  donationPrompt: boolean;
+  dismissDonationPrompt: () => void;
   // Datos
   resetAllData: () => Promise<void>;
   exportData: () => string;
@@ -150,6 +157,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<SpinSettingsState>(DEFAULT_SETTINGS);
   const themePreferences = useMemo(() => ({ color: settings.themeColor, mode: settings.themeMode }), [settings.themeColor, settings.themeMode]);
   const [showLockTip, setShowLockTip] = useState(false);
+  const [donationCounts, setDonationCounts] = useState(EMPTY_DONATION_COUNTS);
+  const donationCountsRef = useRef(EMPTY_DONATION_COUNTS);
+  const [donationPrompt, setDonationPrompt] = useState(false);
+
+  const trackDonation = useCallback((kind: DonationMilestone) => {
+    const next = advanceDonationCount(donationCountsRef.current, kind);
+    donationCountsRef.current = next.counts;
+    setDonationCounts(next.counts);
+    if (next.prompt) setDonationPrompt(true);
+  }, []);
+  const recordSpin = useCallback(() => trackDonation('spins'), [trackDonation]);
 
   // Espejo estable para acciones que necesitan el estado más reciente.
   const stateRef = useRef({ garments, current, recentComboKeys, wearLogs, locks, occasion, settings });
@@ -353,8 +371,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       createdAt: Date.now(),
     };
     setLooks((prev) => [look, ...prev]);
+    trackDonation('looks');
     return look;
-  }, [weather.data]);
+  }, [trackDonation, weather.data]);
 
   const deleteLook = useCallback((id: string) => {
     setLooks((prev) => prev.filter((l) => l.id !== id));
@@ -463,6 +482,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const dismissLockTip = useCallback(() => setShowLockTip(false), []);
+  const dismissDonationPrompt = useCallback(() => setDonationPrompt(false), []);
 
   const resetAllData = useCallback(async () => {
     await saveQueue.current;
@@ -481,6 +501,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setOccasion('all');
     setHasOnboarded(false);
     setShowLockTip(false);
+    donationCountsRef.current = EMPTY_DONATION_COUNTS;
+    setDonationCounts(EMPTY_DONATION_COUNTS);
+    setDonationPrompt(false);
     setSettings(DEFAULT_SETTINGS);
     setWeatherPlace(null);
     setWeather({ status: 'idle' });
@@ -505,7 +528,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     settings,
     showLockTip,
     weatherPlace,
-  }), [hasOnboarded, audience, garments, looks, wearLogs, recentComboKeys, occasion, current, locks, settings, showLockTip, weatherPlace]);
+    donationCounts,
+  }), [hasOnboarded, audience, garments, looks, wearLogs, recentComboKeys, occasion, current, locks, settings, showLockTip, weatherPlace, donationCounts]);
 
   const restore = useCallback((data: AppBackup) => {
     ++weatherRequest.current;
@@ -526,6 +550,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setLocks(data.locks);
     setSettings(data.settings);
     setShowLockTip(data.showLockTip);
+    donationCountsRef.current = data.donationCounts;
+    setDonationCounts(data.donationCounts);
+    setDonationPrompt(false);
     setWeatherPlace(data.weatherPlace);
     setWeather({ status: 'idle' });
     void loadWeather(data.weatherPlace, false);
@@ -586,6 +613,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toggleLock,
       manualPick,
       spinNow,
+      recordSpin,
       undo,
       canUndo: history.length > 0,
       clearLocks,
@@ -607,6 +635,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateSettings,
       showLockTip,
       dismissLockTip,
+      donationPrompt,
+      dismissDonationPrompt,
       resetAllData,
       exportData,
       importData,
@@ -629,6 +659,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toggleLock,
       manualPick,
       spinNow,
+      recordSpin,
       undo,
       history.length,
       clearLocks,
@@ -650,6 +681,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateSettings,
       showLockTip,
       dismissLockTip,
+      donationPrompt,
+      dismissDonationPrompt,
       resetAllData,
       exportData,
       importData,
@@ -657,9 +690,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <ThemePreferencesContext.Provider value={themePreferences}>
-      <AppContext.Provider value={value}>{children}</AppContext.Provider>
-    </ThemePreferencesContext.Provider>
+    <LanguageContext.Provider value={settings.language}>
+      <ThemePreferencesContext.Provider value={themePreferences}>
+        <AppContext.Provider value={value}>{children}</AppContext.Provider>
+      </ThemePreferencesContext.Provider>
+    </LanguageContext.Provider>
   );
 }
 

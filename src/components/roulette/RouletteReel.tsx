@@ -26,6 +26,7 @@ import Animated, {
 import { GarmentSilhouette, patternFor } from '@/components/silhouettes';
 import { AppText } from '@/components/ui/AppText';
 import type { Garment, ReelSlot } from '@/engine';
+import { translate, useLanguage } from '@/localization';
 import { hapticTick } from '@/services/haptics';
 import { playTick } from '@/services/sound';
 import { useTheme, type ReelKey } from '@/theme';
@@ -126,6 +127,7 @@ export function RouletteReel({
   /** Paso real de fila dentro de la ventana interior. */
   const ROW = H - WINDOW_INSET * 2;
   const { colors, reelGradient, reelTint, radii } = useTheme();
+  const language = useLanguage();
   const [strip, setStrip] = useState<Garment[]>(() => (winner ? [winner] : []));
   const translateY = useSharedValue(0);
   const startY = useSharedValue(0);
@@ -260,7 +262,7 @@ export function RouletteReel({
 
   return (
     <View
-      accessibilityLabel={`Carrete ${slotLabel}${locked ? ', fijado' : ''}`}
+      accessibilityLabel={language === 'en' ? `${translate(slotLabel, language)} reel${locked ? ', locked' : ''}` : `Carrete ${slotLabel}${locked ? ', fijado' : ''}`}
       style={[
         styles.card,
         {

@@ -1,0 +1,5 @@
+{
+  "ios": {
+    "NSLocationWhenInUseUsageDescription": "Outfit Roulette uses your approximate location to adapt outfits to today's weather."
+  }
+}

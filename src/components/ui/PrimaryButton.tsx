@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { hapticTap } from '@/services/haptics';
+import { translate, useLanguage } from '@/localization';
 import { useTheme } from '@/theme';
 import { AppText } from './AppText';
 
@@ -31,6 +32,7 @@ export function PrimaryButton({
   accessibilityHint,
 }: PrimaryButtonProps) {
   const { colors, actionGradient, radii, spacing } = useTheme();
+  const language = useLanguage();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -42,7 +44,7 @@ export function PrimaryButton({
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ disabled: Boolean(disabled) }}
-        accessibilityHint={accessibilityHint}
+        accessibilityHint={accessibilityHint ? translate(accessibilityHint, language) : undefined}
         disabled={disabled}
         onPressIn={() => {
           scale.value = withSpring(0.97, { damping: 18, stiffness: 300 });

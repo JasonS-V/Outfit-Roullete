@@ -26,6 +26,7 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useToast } from '@/components/ui/Toast';
 import { WeatherChip, WeatherSheet } from '@/components/weather';
 import { candidateItems, useApp } from '@/context/AppContext';
+import { translate, useLanguage } from '@/localization';
 import {
   fitsOccasion,
   modeForTemperature,
@@ -77,10 +78,11 @@ function ActionButton({
   disabled?: boolean;
 }) {
   const { colors } = useTheme();
+  const language = useLanguage();
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={translate(label, language)}
       accessibilityState={{ disabled: Boolean(disabled) }}
       disabled={disabled}
       onPress={onPress}
@@ -98,6 +100,7 @@ function ActionButton({
 
 export default function RouletteScreen() {
   const app = useApp();
+  const language = useLanguage();
   const { colors } = useTheme();
   const { showToast } = useToast();
   const [spinId, setSpinId] = useState(0);
@@ -184,9 +187,12 @@ export default function RouletteScreen() {
     setSettled((count) => count + 1);
   }, []);
 
+  const recordSpin = app.recordSpin;
+
   useEffect(() => {
     if (spinning && settled >= expectedRef.current) {
       setSpinning(false);
+      recordSpin();
       hapticSuccess();
       playChime();
       if (scrollAfterSpinRef.current) {
@@ -194,7 +200,7 @@ export default function RouletteScreen() {
         requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
       }
     }
-  }, [spinning, settled]);
+  }, [spinning, settled, recordSpin]);
 
   const handleSpin = useCallback(() => {
     if (spinning) return;
@@ -282,13 +288,13 @@ export default function RouletteScreen() {
 
   const handleShare = useCallback(async () => {
     if (!current) return;
-    const outcome = await shareOutfit(candidateItems(current));
+    const outcome = await shareOutfit(candidateItems(current), language);
     if (outcome === 'copied') {
       showToast({ text: 'Look copiado, pégalo donde quieras' });
     } else if (outcome === 'failed') {
       showToast({ text: 'No se pudo compartir en este dispositivo' });
     }
-  }, [current, showToast]);
+  }, [current, language, showToast]);
 
   if (!app.ready) return null;
 

@@ -3,6 +3,8 @@
  * estadísticas reales del ropero y borrado total de datos.
  */
 
+import * as Linking from 'expo-linking';
+import { KO_FI_URL } from '@/services/donation';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -11,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/AppText';
 import { Chip } from '@/components/ui/Chip';
+import { translate, useLanguage, type Language } from '@/localization';
 import { ChevronRightIcon } from '@/components/ui/icons';
 import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { useToast } from '@/components/ui/Toast';
@@ -29,10 +32,11 @@ function Section({
   children: React.ReactNode;
 }) {
   const { colors, radii, spacing } = useTheme();
+  const language = useLanguage();
   return (
     <View style={{ gap: spacing.two }}>
       <AppText variant="label" color={colors.inkSoft} style={styles.sectionTitle}>
-        {title.toUpperCase()}
+        {translate(title, language).toUpperCase()}
       </AppText>
       <View
         style={{
@@ -92,6 +96,7 @@ function SwitchRow({
   divider?: boolean;
 }) {
   const { colors, spacing } = useTheme();
+  const language = useLanguage();
   const reducedMotion = useReducedMotion();
   const progress = useSharedValue(value ? 1 : 0);
   useEffect(() => {
@@ -118,7 +123,7 @@ function SwitchRow({
         </View>
         <Pressable
           accessibilityRole="switch"
-          accessibilityLabel={label}
+          accessibilityLabel={translate(label, language)}
           accessibilityState={{ checked: value }}
           aria-checked={value}
           onPress={() => onChange(!value)}
@@ -138,6 +143,10 @@ const modeOptions: { key: ThemeMode; label: string }[] = [
   { key: 'light', label: 'Claro' },
   { key: 'dark', label: 'Oscuro' },
 ];
+const languageOptions: { key: Language; label: string }[] = [
+  { key: 'es', label: 'Español' },
+  { key: 'en', label: 'English' },
+];
 
 function AppearanceDropdown<T extends string>({
   label,
@@ -155,6 +164,7 @@ function AppearanceDropdown<T extends string>({
   onSelect: (key: T) => void;
 }) {
   const { colors, radii, spacing } = useTheme();
+  const language = useLanguage();
   const selected = options.find((option) => option.key === value)!;
   const reducedMotion = useReducedMotion();
   const rotation = useSharedValue(expanded ? -90 : 90);
@@ -167,7 +177,7 @@ function AppearanceDropdown<T extends string>({
     <View>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${label}: ${selected.label}`}
+        accessibilityLabel={`${translate(label, language)}: ${translate(selected.label, language)}`}
         accessibilityState={{ expanded }}
         onPress={onToggle}
         style={({ pressed }) => [styles.appearanceTrigger, { borderColor: colors.line, borderRadius: radii.md, paddingHorizontal: spacing.four, opacity: pressed ? 0.7 : 1 }]}
@@ -185,7 +195,7 @@ function AppearanceDropdown<T extends string>({
             <Pressable
               key={option.key}
               accessibilityRole="button"
-              accessibilityLabel={`${label}: ${option.label}`}
+              accessibilityLabel={`${translate(label, language)}: ${translate(option.label, language)}`}
               accessibilityState={{ selected: value === option.key }}
               onPress={() => onSelect(option.key)}
               style={({ pressed }) => [styles.appearanceOption, { borderBottomColor: colors.lineSoft, paddingHorizontal: spacing.four, opacity: pressed ? 0.7 : 1 }]}
@@ -203,11 +213,12 @@ function AppearanceDropdown<T extends string>({
 
 export default function ProfileScreen() {
   const app = useApp();
+  const language = useLanguage();
   const { colors, spacing } = useTheme();
   const { showToast } = useToast();
   const [weatherOpen, setWeatherOpen] = useState(false);
   const [transferBusy, setTransferBusy] = useState(false);
-  const [appearanceOpen, setAppearanceOpen] = useState<'mode' | 'color' | null>(null);
+  const [appearanceOpen, setAppearanceOpen] = useState<'mode' | 'color' | 'language' | null>(null);
 
   const active = useMemo(() => app.garments.filter((g) => !g.isArchived), [app.garments]);
 
@@ -290,7 +301,15 @@ export default function ProfileScreen() {
 
         <Section title="Apariencia">
           <AppearanceDropdown
-            label="Modo"
+            label="Idioma"
+            options={languageOptions}
+            value={app.settings.language}
+            expanded={appearanceOpen === 'language'}
+            onToggle={() => setAppearanceOpen(appearanceOpen === 'language' ? null : 'language')}
+            onSelect={(language) => { app.updateSettings({ language }); setAppearanceOpen(null); }}
+          />
+          <AppearanceDropdown
+            label="Tema"
             options={modeOptions}
             value={app.settings.themeMode}
             expanded={appearanceOpen === 'mode'}
@@ -359,7 +378,7 @@ export default function ProfileScreen() {
             onPress={async () => {
               setTransferBusy(true);
               try {
-                await exportBackupFile(app.exportData());
+                await exportBackupFile(app.exportData(), language);
               } catch {
                 showToast({ text: 'No se pudo exportar el respaldo.' });
               } finally {
@@ -381,6 +400,7 @@ export default function ProfileScreen() {
                   'Importar respaldo',
                   `Este archivo contiene ${backup.garments.length} prendas, ${backup.looks.length} looks y ${backup.wearLogs.length} usos. Reemplazará todos los datos actuales de este dispositivo.`,
                   'Importar',
+                  language,
                 );
                 if (!ok) return;
                 await app.importData(json);
@@ -406,6 +426,7 @@ export default function ProfileScreen() {
                 'Eliminar todos mis datos',
                 'Se borran armario, looks e historial de este dispositivo. Esta acción no se puede deshacer.',
                 'Eliminar todo',
+                language,
               );
               if (ok) {
                 try {
@@ -422,6 +443,24 @@ export default function ProfileScreen() {
             Tus datos se guardan en este dispositivo, sin cuenta. Exporta un respaldo para llevarlos a otro.
           </AppText>
           {app.storageError ? <AppText variant="micro" color={colors.danger}>{app.storageError}</AppText> : null}
+        </Section>
+
+        <Section title="Apoya el proyecto">
+          <AppText variant="body" color={colors.inkSoft}>
+            La donación es opcional. Puedes seguir usando todas las funciones gratis.
+          </AppText>
+          <PrimaryButton
+            label="Apoyar en Ko-fi"
+            variant="ghost"
+            accessibilityHint="Abre Ko-fi en tu navegador"
+            onPress={async () => {
+              try {
+                await Linking.openURL(KO_FI_URL);
+              } catch {
+                showToast({ text: 'No se pudo abrir Ko-fi. Inténtalo de nuevo.' });
+              }
+            }}
+          />
         </Section>
 
         <AppText variant="micro" color={colors.inkSoft} style={{ textAlign: 'center' }}>

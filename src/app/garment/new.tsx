@@ -19,6 +19,7 @@ import { useApp } from '@/context/AppContext';
 import { ALL_BASICS, BASIC_BY_KEY } from '@/data/catalog';
 import { COLOR_PALETTE, colorNameFor } from '@/data/palette';
 import type { Slot } from '@/engine';
+import { translate, useLanguage } from '@/localization';
 import { useTheme } from '@/theme';
 
 const SLOT_TABS: { key: Slot; label: string }[] = [
@@ -31,6 +32,7 @@ const SLOT_TABS: { key: Slot; label: string }[] = [
 
 export default function NewGarmentScreen() {
   const app = useApp();
+  const language = useLanguage();
   const { colors, reelTint, radii, spacing } = useTheme();
   const { showToast } = useToast();
   const [slot, setSlot] = useState<Slot>('top');
@@ -55,7 +57,7 @@ export default function NewGarmentScreen() {
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg }]} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Volver al armario" onPress={() => router.back()} style={styles.backButton}>
+        <Pressable accessibilityRole="button" accessibilityLabel={translate('Volver al armario', language)} onPress={() => router.back()} style={styles.backButton}>
           <AppText variant="title">‹</AppText>
         </Pressable>
         <AppText variant="title" style={styles.headerTitle}>Añadir prenda</AppText>
@@ -86,7 +88,7 @@ export default function NewGarmentScreen() {
         renderItem={({ item }) => (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={item.name}
+            accessibilityLabel={translate(item.name, language)}
             onPress={() => {
               setOpenKey(item.key);
               setColorHex(item.colorHex);
@@ -130,7 +132,7 @@ export default function NewGarmentScreen() {
                   <Pressable
                     key={option.hex}
                     accessibilityRole="button"
-                    accessibilityLabel={option.name}
+                    accessibilityLabel={translate(option.name, language)}
                     accessibilityState={{ selected: isOn }}
                     onPress={() => setColorHex(option.hex)}
                     style={[

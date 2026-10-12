@@ -16,14 +16,15 @@ import { PrimaryButton } from '@/components/ui/PrimaryButton';
 import { Sheet } from '@/components/ui/Sheet';
 import { useToast } from '@/components/ui/Toast';
 import { useApp } from '@/context/AppContext';
+import { translate, useLanguage } from '@/localization';
 import { OCCASION_LABELS, type Garment, type SavedLook } from '@/engine';
 import { useTheme } from '@/theme';
 import { confirmDestructive } from '@/utils/confirm';
 import { shareOutfit } from '@/utils/share';
 
-function formatDate(ms: number): string {
+function formatDate(ms: number, language: 'es' | 'en'): string {
   try {
-    return new Date(ms).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' });
+    return new Date(ms).toLocaleDateString(language === 'en' ? 'en-US' : 'es-PE', { day: 'numeric', month: 'short' });
   } catch {
     return '';
   }
@@ -35,6 +36,7 @@ function tempDiff(a: number, b: number): number {
 
 export default function LookbookScreen() {
   const app = useApp();
+  const language = useLanguage();
   const { colors, radii, spacing } = useTheme();
   const { width } = useWindowDimensions();
   const { showToast } = useToast();
@@ -79,7 +81,7 @@ export default function LookbookScreen() {
   const lookCard = (look: SavedLook) => (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Look de ${OCCASION_LABELS[look.occasion]} del ${formatDate(look.createdAt)}`}
+      accessibilityLabel={language === 'en' ? `${translate(OCCASION_LABELS[look.occasion], language)} outfit from ${formatDate(look.createdAt, language)}` : `Look de ${OCCASION_LABELS[look.occasion]} del ${formatDate(look.createdAt, language)}`}
       onPress={() => setOpenId(look.id)}
       style={({ pressed }) => [
         styles.card,
@@ -98,7 +100,7 @@ export default function LookbookScreen() {
       <View style={styles.cardFooter}>
         <AppText variant="label" numberOfLines={1}>{OCCASION_LABELS[look.occasion]}</AppText>
         <AppText variant="micro" color={colors.inkSoft} numberOfLines={1}>
-          Guardado el {formatDate(look.createdAt)}
+          {language === 'en' ? 'Saved on' : 'Guardado el'} {formatDate(look.createdAt, language)}
         </AppText>
       </View>
     </Pressable>
@@ -214,7 +216,7 @@ export default function LookbookScreen() {
               variant="ghost"
               leading={<ShareIcon size={18} color={colors.ink} />}
               onPress={async () => {
-                const outcome = await shareOutfit(itemsOf(openLook));
+                const outcome = await shareOutfit(itemsOf(openLook), language);
                 if (outcome === 'copied') showToast({ text: 'Look copiado, pégalo donde quieras' });
                 if (outcome === 'failed') showToast({ text: 'No se pudo compartir en este dispositivo' });
               }}
@@ -223,7 +225,7 @@ export default function LookbookScreen() {
               label="Eliminar look"
               variant="danger"
               onPress={async () => {
-                const ok = await confirmDestructive('Eliminar look', 'Se quitará del Lookbook para siempre.');
+                const ok = await confirmDestructive('Eliminar look', 'Se quitará del Lookbook para siempre.', 'Eliminar', language);
                 if (ok) {
                   app.deleteLook(openLook.id);
                   setOpenId(null);
