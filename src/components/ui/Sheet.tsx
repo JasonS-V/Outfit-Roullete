@@ -44,15 +44,12 @@ export function Sheet({ visible, onClose, title, children, maxHeightRatio = 0.85
     .onUpdate((event) => {
       position.set(Math.max(0, event.translationY));
     })
-    .onEnd((event) => {
-      if (shouldCloseSheet(event.translationY, event.velocityY)) {
+    .onEnd((event, success) => {
+      if (success && shouldCloseSheet(event.translationY, event.velocityY)) {
         runOnJS(onClose)();
       } else {
         position.set(withSpring(0, { damping: 22, stiffness: 260 }));
       }
-    })
-    .onFinalize((_event, success) => {
-      if (!success) position.set(withSpring(0, { damping: 22, stiffness: 260 }));
     });
 
   const panelStyle = useAnimatedStyle(() => ({ transform: [{ translateY: position.get() }] }));
