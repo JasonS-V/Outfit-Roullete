@@ -26,6 +26,14 @@
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION"
       ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
       "package": "com.aizendev1.outfitroulette"
     },
     "web": {
@@ -46,11 +54,21 @@
           "imageWidth": 140
         }
       ],
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "recordAudioAndroid": false,
+          "microphonePermission": false,
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false
+        }
+      ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Outfit Roulette usa tu ubicación aproximada para adaptar los looks al clima de hoy."
+          "locationWhenInUsePermission": "Outfit Roulette usa tu ubicación aproximada para adaptar los looks al clima de hoy.",
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false
         }
       ],
       "expo-asset",
