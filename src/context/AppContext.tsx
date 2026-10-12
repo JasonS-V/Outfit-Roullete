@@ -1,8 +1,4 @@
-/**
- * AppContext · estado global de Outfit Roulette.
- * En memoria durante el Sprint 1 (mock); la interfaz de acciones ya está
- * pensada para conectar SQLite en el Sprint 3 sin tocar las pantallas.
- */
+/** Estado global de Outfit Roulette, guardado en este dispositivo. */
 
 import React, {
   createContext,
@@ -13,6 +9,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { BASIC_BY_KEY, garmentFromBasic, type Audience, type BasicItem } from '@/data/catalog';
 import { colorNameFor } from '@/data/palette';
@@ -28,10 +25,10 @@ import type {
 } from '@/engine';
 import { setHapticsEnabled } from '@/services/haptics';
 import { setSoundEnabled } from '@/services/sound';
+import { parseBackup, type AppBackup } from '@/services/backup';
 import { ThemePreferencesContext } from '@/theme';
 import type { ThemeColor, ThemeMode } from '@/theme/tokens';
 import {
-  cachedWeather,
   deviceCoordinates,
   fetchWeatherAt,
   WeatherError,
@@ -58,8 +55,15 @@ export interface WeatherState {
 }
 
 const WEATHER_FALLBACK_C = 20;
+const STORAGE_KEY = 'outfit-roulette:state:v1';
+const DEFAULT_SETTINGS: SpinSettingsState = {
+  themeColor: 'sage', themeMode: 'system', soundOn: true, hapticsOn: true,
+  personalOffsetC: 0, chaosMode: false, layerEnabled: false,
+};
 
 interface AppContextType {
+  ready: boolean;
+  storageError: string | null;
   // Onboarding
   hasOnboarded: boolean;
   audience: Audience;
@@ -107,7 +111,9 @@ interface AppContextType {
   showLockTip: boolean;
   dismissLockTip: () => void;
   // Datos
-  resetAllData: () => void;
+  resetAllData: () => Promise<void>;
+  exportData: () => string;
+  importData: (json: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -124,6 +130,11 @@ function todayKey(now = new Date()): string {
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
+  const [canPersist, setCanPersist] = useState(false);
+  const [storageError, setStorageError] = useState<string | null>(null);
+  const saveQueue = useRef(Promise.resolve());
+  const weatherRequest = useRef(0);
   const [hasOnboarded, setHasOnboarded] = useState(false);
   const [audience, setAudience] = useState<Audience>('uni');
   const [garments, setGarments] = useState<Garment[]>([]);
@@ -134,19 +145,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [current, setCurrent] = useState<Candidate | null>(null);
   const [history, setHistory] = useState<Candidate[]>([]);
   const [locks, setLocks] = useState<Partial<Record<ReelSlot, string>>>({});
-  const [weather, setWeather] = useState<WeatherState>(() => {
-    const cached = cachedWeather();
-    return cached ? { status: 'ready', data: cached } : { status: 'idle' };
-  });
-  const [settings, setSettings] = useState<SpinSettingsState>({
-    themeColor: 'sage',
-    themeMode: 'system',
-    soundOn: true,
-    hapticsOn: true,
-    personalOffsetC: 0,
-    chaosMode: false,
-    layerEnabled: false,
-  });
+  const [weather, setWeather] = useState<WeatherState>({ status: 'idle' });
+  const [weatherPlace, setWeatherPlace] = useState<AppBackup['weatherPlace']>(null);
+  const [settings, setSettings] = useState<SpinSettingsState>(DEFAULT_SETTINGS);
   const themePreferences = useMemo(() => ({ color: settings.themeColor, mode: settings.themeMode }), [settings.themeColor, settings.themeMode]);
   const [showLockTip, setShowLockTip] = useState(false);
 
@@ -423,46 +424,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Clima ───────────────────────────────────────────────────────────────
 
-  const setCity = useCallback(async (city: CityResult) => {
+  const loadWeather = useCallback(async (place: AppBackup['weatherPlace'], askPermission: boolean) => {
+    if (!place) return;
+    const request = ++weatherRequest.current;
     setWeather({ status: 'loading' });
     try {
-      const data = await fetchWeatherAt(city.lat, city.lon, city.name);
-      setWeather({ status: 'ready', data });
+      const coords = place === 'device' ? await deviceCoordinates(askPermission) : place;
+      if (!coords) throw new WeatherError('permission', 'Ubicación no disponible. Elige tu ciudad manualmente.');
+      const data = await fetchWeatherAt(coords.lat, coords.lon, place === 'device' ? 'Tu ubicación' : place.name);
+      if (request === weatherRequest.current) setWeather({ status: 'ready', data });
     } catch (error) {
       const message =
-        error instanceof WeatherError && error.kind === 'offline'
-          ? 'Sin conexión. Puedes seguir girando sin clima.'
-          : 'No pudimos leer el clima. Intenta de nuevo.';
-      setWeather({ status: 'error', error: message });
+        error instanceof WeatherError && error.kind === 'permission'
+          ? error.message
+          : error instanceof WeatherError && error.kind === 'offline'
+            ? 'Sin conexión. Puedes seguir girando sin clima.'
+            : 'No pudimos leer el clima. Intenta de nuevo.';
+      if (request === weatherRequest.current) setWeather({ status: 'error', error: message });
     }
   }, []);
 
+  const setCity = useCallback(async (city: CityResult) => {
+    setWeatherPlace(city);
+    await loadWeather(city, false);
+  }, [loadWeather]);
+
   const refreshWeather = useCallback(async () => {
-    const cached = cachedWeather();
-    if (cached) {
-      setWeather({ status: 'ready', data: cached });
-      return;
-    }
-    setWeather({ status: 'loading' });
-    const coords = await deviceCoordinates();
-    if (!coords) {
-      setWeather({
-        status: 'error',
-        error: 'Ubicación no disponible. Elige tu ciudad manualmente.',
-      });
-      return;
-    }
-    try {
-      const data = await fetchWeatherAt(coords.lat, coords.lon, 'Tu ubicación');
-      setWeather({ status: 'ready', data });
-    } catch (error) {
-      const message =
-        error instanceof WeatherError && error.kind === 'offline'
-          ? 'Sin conexión. Puedes seguir girando sin clima.'
-          : 'No pudimos leer el clima. Intenta de nuevo.';
-      setWeather({ status: 'error', error: message });
-    }
-  }, []);
+    setWeatherPlace('device');
+    await loadWeather('device', true);
+  }, [loadWeather]);
 
   const temperatureForEngine = weather.data?.apparentC ?? WEATHER_FALLBACK_C;
 
@@ -474,7 +464,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const dismissLockTip = useCallback(() => setShowLockTip(false), []);
 
-  const resetAllData = useCallback(() => {
+  const resetAllData = useCallback(async () => {
+    await saveQueue.current;
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    ++weatherRequest.current;
+    setCanPersist(true);
+    setStorageError(null);
+    setAudience('uni');
     setGarments([]);
     setLooks([]);
     setWearLogs([]);
@@ -485,10 +481,94 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setOccasion('all');
     setHasOnboarded(false);
     setShowLockTip(false);
+    setSettings(DEFAULT_SETTINGS);
+    setWeatherPlace(null);
+    setWeather({ status: 'idle' });
   }, []);
+
+  // shortcut: un solo JSON local es suficiente para este catálogo; pasar a SQLite si el historial crece demasiado.
+  const snapshot = useMemo<AppBackup>(() => ({
+    version: 1,
+    hasOnboarded,
+    audience,
+    garments,
+    looks,
+    wearLogs,
+    recentComboKeys,
+    occasion,
+    currentIds: current
+      ? Object.fromEntries((['top', 'bottom', 'layer', 'shoes', 'onepiece'] as const)
+          .filter((slot) => current[slot])
+          .map((slot) => [slot, current[slot]!.id]))
+      : {},
+    locks,
+    settings,
+    showLockTip,
+    weatherPlace,
+  }), [hasOnboarded, audience, garments, looks, wearLogs, recentComboKeys, occasion, current, locks, settings, showLockTip, weatherPlace]);
+
+  const restore = useCallback((data: AppBackup) => {
+    ++weatherRequest.current;
+    setHasOnboarded(data.hasOnboarded);
+    setAudience(data.audience);
+    setGarments(data.garments);
+    setLooks(data.looks);
+    setWearLogs(data.wearLogs);
+    setRecentComboKeys(data.recentComboKeys);
+    setOccasion(data.occasion);
+    const restoredCurrent: Candidate = { breakdown: zeroBreakdown() };
+    for (const slot of ['top', 'bottom', 'layer', 'shoes', 'onepiece'] as const) {
+      const id = data.currentIds[slot];
+      if (id) restoredCurrent[slot] = data.garments.find((g) => g.id === id);
+    }
+    setCurrent(Object.keys(data.currentIds).length ? restoredCurrent : null);
+    setHistory([]);
+    setLocks(data.locks);
+    setSettings(data.settings);
+    setShowLockTip(data.showLockTip);
+    setWeatherPlace(data.weatherPlace);
+    setWeather({ status: 'idle' });
+    void loadWeather(data.weatherPlace, false);
+  }, [loadWeather]);
+
+  useEffect(() => {
+    let active = true;
+    void AsyncStorage.getItem(STORAGE_KEY).then((json) => {
+      if (!active) return;
+      if (json) restore(parseBackup(json));
+      setCanPersist(true);
+    }).catch(() => {
+      if (active) setStorageError('No se pudieron leer los datos guardados. Importa un respaldo o reinicia la app.');
+    }).finally(() => {
+      if (active) setReady(true);
+    });
+    return () => { active = false; };
+  }, [restore]);
+
+  useEffect(() => {
+    if (!ready || !canPersist) return;
+    const json = JSON.stringify(snapshot);
+    saveQueue.current = saveQueue.current.then(() => AsyncStorage.setItem(STORAGE_KEY, json)).then(
+      () => setStorageError(null),
+      () => setStorageError('No se pudieron guardar los cambios en este dispositivo.'),
+    );
+  }, [snapshot, ready, canPersist]);
+
+  const exportData = useCallback(() => JSON.stringify(snapshot, null, 2), [snapshot]);
+
+  const importData = useCallback(async (json: string) => {
+    const data = parseBackup(json);
+    await saveQueue.current;
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    setCanPersist(true);
+    setStorageError(null);
+    restore(data);
+  }, [restore]);
 
   const value = useMemo<AppContextType>(
     () => ({
+      ready,
+      storageError,
       hasOnboarded,
       audience,
       setAudience,
@@ -528,8 +608,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       showLockTip,
       dismissLockTip,
       resetAllData,
+      exportData,
+      importData,
     }),
     [
+      ready,
+      storageError,
       hasOnboarded,
       audience,
       completeOnboarding,
@@ -567,6 +651,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       showLockTip,
       dismissLockTip,
       resetAllData,
+      exportData,
+      importData,
     ],
   );
 

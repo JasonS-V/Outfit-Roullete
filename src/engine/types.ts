@@ -1,6 +1,6 @@
 /**
  * Tipos del dominio Outfit Roulette.
- * Espejo 1:1 del esquema SQLite del documento maestro §17, en memoria por ahora.
+ * Modelo de prendas, looks, usos y giros guardados localmente.
  */
 
 export type Slot = 'top' | 'bottom' | 'layer' | 'shoes' | 'onepiece';

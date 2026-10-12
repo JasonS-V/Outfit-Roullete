@@ -1,6 +1,6 @@
 /**
  * WeatherService · Open-Meteo (sin API key, §8.2).
- * Caché de 3 horas + geocodificación de ciudades + ubicación del dispositivo.
+ * Geocodificación de ciudades + ubicación del dispositivo.
  */
 
 import * as Location from 'expo-location';
@@ -27,14 +27,6 @@ export class WeatherError extends Error {
     super(message);
     this.kind = kind;
   }
-}
-
-const CACHE_MS = 3 * 60 * 60 * 1000;
-let cache: WeatherData | null = null;
-
-export function cachedWeather(): WeatherData | null {
-  if (cache && Date.now() - cache.fetchedAt < CACHE_MS) return cache;
-  return null;
 }
 
 async function fetchJson(url: string, timeoutMs = 9000): Promise<unknown> {
@@ -72,7 +64,6 @@ export async function fetchWeatherAt(lat: number, lon: number, city: string): Pr
     city,
     fetchedAt: Date.now(),
   };
-  cache = data;
   return data;
 }
 
@@ -99,9 +90,11 @@ export async function searchCity(query: string): Promise<CityResult[]> {
   }));
 }
 
-export async function deviceCoordinates(): Promise<{ lat: number; lon: number } | null> {
+export async function deviceCoordinates(requestPermission = true): Promise<{ lat: number; lon: number } | null> {
   try {
-    const { status } = await Location.requestForegroundPermissionsAsync();
+    const { status } = requestPermission
+      ? await Location.requestForegroundPermissionsAsync()
+      : await Location.getForegroundPermissionsAsync();
     if (status !== 'granted') return null;
     const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
     return { lat: position.coords.latitude, lon: position.coords.longitude };

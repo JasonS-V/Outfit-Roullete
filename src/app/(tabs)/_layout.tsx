@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HangerIcon, RouletteIcon, SlidersIcon, StarIcon } from '@/components/ui/icons';
@@ -8,10 +9,12 @@ import { fontFamily, useTheme } from '@/theme';
 export default function TabLayout() {
   const { colors } = useTheme();
   const { bottom } = useSafeAreaInsets();
+  const reducedMotion = useReducedMotion();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        animation: reducedMotion ? 'none' : 'shift',
         tabBarActiveTintColor: colors.ink,
         tabBarInactiveTintColor: colors.inkSoft,
         tabBarActiveBackgroundColor: colors.surface,

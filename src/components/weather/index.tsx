@@ -192,7 +192,7 @@ export function WeatherSheet({
           </AppText>
         ) : null}
         <PrimaryButton
-          label={weather.status === 'ready' ? 'Actualizar mi ubicación' : 'Usar mi ubicación'}
+          label="Usar mi ubicación"
           onPress={() => {
             void refreshWeather();
           }}

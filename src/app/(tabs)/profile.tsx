@@ -16,6 +16,8 @@ import { useToast } from '@/components/ui/Toast';
 import { WeatherSheet } from '@/components/weather';
 import { useApp } from '@/context/AppContext';
 import { themeColorOptions, useTheme, type ThemeMode } from '@/theme';
+import { parseBackup } from '@/services/backup';
+import { exportBackupFile, pickBackupFile } from '@/services/backupFile';
 import { confirmDestructive } from '@/utils/confirm';
 
 function Section({
@@ -185,6 +187,7 @@ export default function ProfileScreen() {
   const { colors, spacing } = useTheme();
   const { showToast } = useToast();
   const [weatherOpen, setWeatherOpen] = useState(false);
+  const [transferBusy, setTransferBusy] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState<'mode' | 'color' | null>(null);
 
   const active = useMemo(() => app.garments.filter((g) => !g.isArchived), [app.garments]);
@@ -331,8 +334,54 @@ export default function ProfileScreen() {
 
         <Section title="Datos">
           <PrimaryButton
+            label="Exportar respaldo"
+            variant="ghost"
+            disabled={transferBusy || !app.ready}
+            onPress={async () => {
+              setTransferBusy(true);
+              try {
+                await exportBackupFile(app.exportData());
+              } catch {
+                showToast({ text: 'No se pudo exportar el respaldo.' });
+              } finally {
+                setTransferBusy(false);
+              }
+            }}
+          />
+          <PrimaryButton
+            label="Importar respaldo"
+            variant="ghost"
+            disabled={transferBusy || !app.ready}
+            onPress={async () => {
+              setTransferBusy(true);
+              try {
+                const json = await pickBackupFile();
+                if (!json) return;
+                const backup = parseBackup(json);
+                const ok = await confirmDestructive(
+                  'Importar respaldo',
+                  `Este archivo contiene ${backup.garments.length} prendas, ${backup.looks.length} looks y ${backup.wearLogs.length} usos. Reemplazará todos los datos actuales de este dispositivo.`,
+                  'Importar',
+                );
+                if (!ok) return;
+                await app.importData(json);
+                showToast({ text: 'Respaldo importado.' });
+                router.replace(backup.hasOnboarded ? '/' : '/onboarding');
+              } catch {
+                showToast({ text: 'No se pudo importar. Comprueba que sea un respaldo válido.' });
+              } finally {
+                setTransferBusy(false);
+              }
+            }}
+          />
+          <AppText variant="micro" color={colors.inkSoft}>
+            El respaldo incluye armario, looks, historial, preferencias y ciudad elegida.
+          </AppText>
+          <RowDivider />
+          <PrimaryButton
             label="Eliminar todos mis datos"
             variant="danger"
+            disabled={transferBusy || !app.ready}
             onPress={async () => {
               const ok = await confirmDestructive(
                 'Eliminar todos mis datos',
@@ -340,15 +389,20 @@ export default function ProfileScreen() {
                 'Eliminar todo',
               );
               if (ok) {
-                app.resetAllData();
-                showToast({ text: 'Datos eliminados. Vuelves al inicio.' });
-                router.replace('/onboarding');
+                try {
+                  await app.resetAllData();
+                  showToast({ text: 'Datos eliminados. Vuelves al inicio.' });
+                  router.replace('/onboarding');
+                } catch {
+                  showToast({ text: 'No se pudieron eliminar los datos. Intenta de nuevo.' });
+                }
               }
             }}
           />
           <AppText variant="micro" color={colors.inkSoft}>
-            Tus prendas y looks se guardan solo durante esta sesión.
+            Tus datos se guardan en este dispositivo, sin cuenta. Exporta un respaldo para llevarlos a otro.
           </AppText>
+          {app.storageError ? <AppText variant="micro" color={colors.danger}>{app.storageError}</AppText> : null}
         </Section>
 
         <AppText variant="micro" color={colors.inkSoft} style={{ textAlign: 'center' }}>

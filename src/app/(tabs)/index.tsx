@@ -288,6 +288,8 @@ export default function RouletteScreen() {
     }
   }, [current, showToast]);
 
+  if (!app.ready) return null;
+
   if (!app.hasOnboarded) {
     return <Redirect href="/onboarding" />;
   }

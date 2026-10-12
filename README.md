@@ -3,7 +3,7 @@
 **"Gira. Bloquea. Vístete."** La ruleta interactiva que decide tu outfit diario en
 menos de 5 segundos usando tu propia ropa y adaptada al clima de hoy.
 
-## Estado actual (Sprint 1 + núcleo del Sprint 2)
+## Estado actual
 
 Funcionando de punta a punta:
 
@@ -13,9 +13,9 @@ Funcionando de punta a punta:
   carretes con imán y bloqueo automático al elegir a mano.
 - **"Una pieza" (§6.1):** los carretes Superior e Inferior se fusionan en tarjeta doble
   cuando la ruleta saca un vestido/enterizo; su candado fija la pieza completa.
-- **SpinEngine (§13):** canalización determinista de 4 etapas, 71 tests unitarios
+- **SpinEngine (§13):** canalización determinista de 4 etapas con tests unitarios
   (color, formalidad, clima, frescura, subuso, penalizaciones, relajación, caos).
-- **Clima (Open-Meteo):** detección automática por ubicación con caché de 3h, búsqueda
+- **Clima (Open-Meteo):** detección automática por ubicación y búsqueda
   manual de ciudad, umbrales 26/18/14 con ajuste personal (+2 friolento / -2 caluroso).
 - **Onboarding de 90 segundos** con starter pack de básicos (9 recomendadas, 6
   premarcadas) y primer giro guiado con tip del candado.
@@ -24,13 +24,15 @@ Funcionando de punta a punta:
 - **Looks:** guardar con deshacer, "Para hoy" por temperatura, cargar en la ruleta con
   candados, registrar uso, compartir (hoja nativa / portapapeles en web).
 - **Perfil:** sonido, vibración, modo caos, capa en templado, preferencia térmica,
-  estadísticas reales del ropero y borrado total de datos.
+  estadísticas reales, borrado de datos y exportación/importación de respaldos JSON.
+- **Datos locales:** armario, looks, usos, último giro, ajustes y ciudad se conservan
+  en el dispositivo sin cuenta.
 - **Biblioteca de básicos:** 80 prendas del plan §10.3 representadas con 46 siluetas
   vectoriales recolorables (3 capas) y 16 colores de teñido.
 - **Sonido:** tick/tunc/chime sintetizados localmente (WAV 44.1kHz).
 
 Pendiente (siguientes sprints, según el plan): cámara + recorte local (Sprint 3),
-persistencia SQLite (Sprint 3), video vertical 9:16 (Sprint 4), RevenueCat (Sprint 4),
+video vertical 9:16 (Sprint 4), RevenueCat (Sprint 4),
 las siluetas restantes hasta las 80 del plan (pase de arte continuo).
 
 ## Cómo correr
@@ -39,12 +41,13 @@ las siluetas restantes hasta las 80 del plan (pase de arte continuo).
 pnpm install
 pnpm start          # Expo dev server
 pnpm web            # versión web
-pnpm test           # suite del motor (vitest, 71 tests)
+pnpm test           # tests unitarios (vitest)
 pnpm typecheck      # tsc estricto
 ```
 
-En este sprint el armario vive en memoria: al recargar, el estado se reinicia.
-La base de datos local (SQLite) llega en el Sprint 3 sin cambiar las pantallas.
+Los datos se guardan localmente. En Ajustes → Datos puedes exportar un respaldo
+JSON e importarlo en otro dispositivo; importar reemplaza los datos existentes.
+La temperatura requiere conexión a Open-Meteo y permiso de ubicación si eliges GPS.
 
 ## Estructura
 
@@ -59,10 +62,10 @@ src/
   context/        AppContext: armario, looks, giros, candados, clima, ajustes
   data/           Catálogo de 80 básicos, starter pack, paleta de 16 colores
   engine/         SpinEngine puro (sin RN): color, formalidad, clima, selección
-  services/       Clima (Open-Meteo), hápticos, sonido
+  services/       Clima (Open-Meteo), respaldo, hápticos, sonido
   theme/          Tokens "Boutique Arcade" + tipografía Figtree
   utils/          Compartir, confirmaciones destructivas
-tests/            Suite del motor (vitest, 71 tests)
+tests/            Tests del motor, tema y respaldos (vitest)
 scripts/          generate_sounds.py (síntesis de los WAV)
 assets/sounds/    tick.wav, tunc.wav, chime.wav
 ```
