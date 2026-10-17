@@ -1,0 +1,8 @@
+Your next outfit is already in your closet. 🎲
+
+I built Outfit Roulette to help you find it: spin looks from your own clothes, lock the pieces you love, and save your favorites.
+
+Free for Android. No account needed.
+
+Try it 👇
+https://github.com/JasonS-V/Outfit-Roullete

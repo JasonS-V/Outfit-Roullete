@@ -1,34 +1,34 @@
-# <img src="assets/ORicon.png" alt="Ícono de Outfit Roulette" width="44" height="44"> Outfit Roulette
+# <img src="assets/ORicon.png" alt="Outfit Roulette icon" width="44" height="44"> Outfit Roulette
 
-**Tu ropa, nuevas combinaciones.** Outfit Roulette es una app para Android que te ayuda a decidir qué ponerte con las prendas que ya tienes. Elige una ocasión, gira la ruleta y ajusta el resultado a tu gusto.
+**Your clothes, new combinations.** Outfit Roulette is an Android app that helps you decide what to wear using the clothes you already own. Pick an occasion, spin the roulette, and adjust the result to your liking.
 
-> Disponible para Android · Código abierto · Sin cuenta ni inicio de sesión
+> Available for Android · Open source · No account or sign-in required
 
-[![Ver release v1.0.0 para Android](https://img.shields.io/badge/Descargar-Android%20v1.0.0-7B4EEA?style=for-the-badge&logo=android&logoColor=white)](https://github.com/JasonS-V/Outfit-Roullete/releases/tag/v1.0.0)
+[![Download Android v1.0.0](https://img.shields.io/badge/Download-Android%20v1.0.0-7B4EEA?style=for-the-badge&logo=android&logoColor=white)](https://github.com/JasonS-V/Outfit-Roullete/releases/tag/v1.0.0)
 
-## Qué puedes hacer
+## What you can do
 
-- **Crear tu armario:** añade prendas desde un catálogo de básicos, elige su color y organiza tus favoritas. La ropa marcada como «en lavandería» queda fuera de los giros.
-- **Encontrar un look:** la ruleta combina prendas según la ocasión, el clima, los colores y el uso reciente. Puedes deslizar un carrete para cambiar una prenda o bloquearla para conservarla en el siguiente giro.
-- **Guardar tus combinaciones:** ponles nombre, consúltalas en tu Lookbook, vuelve a cargarlas en la ruleta, registra cuándo las usas y compártelas como texto.
-- **Adaptarla a ti:** ajusta tu preferencia de temperatura, el tema, el idioma, el sonido y la vibración. También puedes activar el modo caos para obtener combinaciones más inesperadas.
+- **Build your wardrobe:** add clothes from a catalog of basics, choose their colors, and mark your favorites. Clothes marked as being in the laundry are excluded from spins.
+- **Find an outfit:** the roulette combines clothes based on the occasion, weather, colors, and recent wear. Swipe a reel to change one item or lock it to keep it for the next spin.
+- **Save your combinations:** name them, browse them in your Lookbook, load them back into the roulette, track when you wear them, and share them as text.
+- **Make it yours:** adjust your temperature preference, theme, language, sound, and vibration. You can also turn on Chaos Mode for more unexpected combinations.
 
-## Tus datos, en tu dispositivo
+## Your data stays on your device
 
-No necesitas registrarte. El armario, los looks, el historial y las preferencias se guardan localmente. Puedes exportarlos a un archivo JSON e importarlos en otro dispositivo; **la importación reemplaza los datos actuales** después de pedirte confirmación.
+No registration is needed. Your wardrobe, saved outfits, wear history, and preferences are stored locally. You can export them to a JSON file and import them on another device; **importing replaces your current data** after you confirm.
 
-El clima es opcional: puedes elegir una ciudad o permitir el acceso a tu ubicación aproximada. Esta función necesita internet para consultar [Open-Meteo](https://open-meteo.com/). Si no la configuras, la ruleta sigue funcionando con una temperatura templada.
+Weather is optional: choose a city or allow access to your approximate location. This feature needs an internet connection to check [Open-Meteo](https://open-meteo.com/). If you don't set it up, the roulette still works using a mild default temperature.
 
-## Desarrollo
+## Development
 
-El proyecto usa Expo SDK 57, React Native, Expo Router y TypeScript. Para ejecutarlo localmente necesitas Node.js y pnpm:
+The project uses Expo SDK 57, React Native, Expo Router, and TypeScript. To run it locally, you need Node.js and pnpm:
 
 ```bash
 pnpm install
 pnpm start
 ```
 
-Comprobaciones del proyecto:
+Project checks:
 
 ```bash
 pnpm lint
@@ -36,8 +36,8 @@ pnpm typecheck
 pnpm test
 ```
 
-## Código abierto y apoyo
+## Open source and support
 
-El código está disponible en este repositorio. Si encuentras un problema o quieres proponer una mejora, puedes abrir un issue o enviar un pull request.
+The source code is available in this repository. If you find a bug or have an idea for an improvement, you can open an issue or submit a pull request.
 
-Outfit Roulette se puede usar gratis. Si quieres apoyar su desarrollo, puedes [donar en Ko-fi](https://ko-fi.com/aizendev); la donación es completamente opcional.
+Outfit Roulette is free to use. If you'd like to support its development, you can [donate on Ko-fi](https://ko-fi.com/aizendev); donations are entirely optional.
